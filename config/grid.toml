@@ -1,0 +1,36 @@
+# Map extent and placement rules.
+#
+# WARNING: these numbers are NOT from the game data. All 500 keys in
+# globals.csv were searched and contain no width, height, tile, grid,
+# map-size, border, or playfield value — the map extent is compiled into the
+# client. See ASSUMPTIONS.md §3.1.
+#
+# They are the common community figures, and are the weakest constants in the
+# project. A base-link decoder is planned to derive the true extent
+# empirically; until it runs against a real layout link these are unverified.
+
+[extent]
+# Total playfield in tiles, including the unbuildable border.
+total_width = 44
+total_height = 44
+
+# Buildable interior in tiles.
+buildable_width = 40
+buildable_height = 40
+
+# Offset of the buildable interior within the total playfield.
+buildable_origin_x = 2
+buildable_origin_y = 2
+
+# Confidence marker. While false, any layout-extent-dependent result is
+# provisional and reports say so. Set true only once derived from a real
+# in-game base link.
+verified_against_base_link = false
+
+[placement]
+# Buildings may not overlap, and must sit fully inside the buildable area.
+allow_overlap = false
+require_inside_buildable = true
+
+# Whether walls may sit on the buildable boundary.
+walls_on_boundary = true

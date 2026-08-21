@@ -1,0 +1,344 @@
+# ASSUMPTIONS
+
+Every approximation, unverified constant, and judgement call in this project.
+Anything not read directly from the extracted game data belongs here.
+
+Status legend:
+
+| Tag | Meaning |
+|---|---|
+| `DATA` | Read from the shipped logic tables. Not an assumption; recorded because the mapping needed a decision. |
+| `DERIVED` | Computed from shipped data, with the derivation stated. |
+| `ASSUMED` | Not in the data. A choice was made. Confidence noted. |
+| `UNVERIFIED` | A value we cannot check against anything. Flagged loudly. |
+| `CONFLICT` | Project spec and game data disagree. Resolution stated. |
+
+Data used throughout: game version **18.400.11**, fingerprint
+`7f04bdfdc4124b1f49308423bb8f4aa8b137aae3`, extracted 2026-08-21.
+
+---
+
+## 1. Data extraction
+
+### 1.1 `DATA` — File names differ from the project brief
+
+The brief named several files that do not exist under those names on the asset
+CDN. The real names were taken from the shipped `fingerprint.json` manifest
+(9075 entries):
+
+| Brief | Actual | Note |
+|---|---|---|
+| `client_globals.csv` | `logic/globals.csv` | No file named `client_globals.csv` exists. |
+| `supers.csv` | `logic/super_licences.csv` | |
+| `equipment.csv` | `logic/character_items.csv` | |
+| `characters_alt.csv` | *(absent)* | No such file in the manifest. |
+| `assets/csv_logic/` | `logic/` | The `assets/csv_logic/` prefix is the path *inside the APK*; the CDN serves them under `logic/`. |
+
+### 1.2 `DATA` — Signature header ahead of the compression header
+
+Every `logic/*.csv` in this version is prefixed with a 68-byte `Sig:` header
+(4-byte magic + 64-byte signature) *before* the LZMA header. The brief
+described the LZMA quirk but not this wrapper. Decoding without stripping it
+fails on every file. Detection is by magic bytes, so files served without it
+still decode.
+
+The brief's LZMA fix is confirmed exactly as described: insert four zero bytes
+at offset 9 to repair the truncated 8-byte uncompressed-size field.
+
+### 1.3 `ASSUMED` — LZHAM is detected but not decoded
+
+Confidence: high that it does not matter today; the risk is deferred, not
+eliminated.
+
+All 12 required tables in 18.400.11 are LZMA. ZSTD is implemented. LZHAM
+(`SCLZ`) is **detected and reported with its framing fields but not decoded** —
+no maintained pure-Rust LZHAM decoder exists, and adding a C dependency for a
+format the current asset set does not use was not worth the build fragility.
+
+If Supercell switches to LZHAM this fails loudly with the dictionary size and
+uncompressed length in the error, rather than silently producing garbage. That
+is the point at which a decoder must be added.
+
+### 1.4 `ASSUMED` — Fingerprint via APK range reads
+
+Confidence: high. Verified working end to end.
+
+The asset sha is not discoverable from the CDN; it ships in the client at
+`assets/fingerprint.json`. Rather than download the ~795 MB APK, the ZIP
+central directory is read over HTTP range requests and only that one entry is
+fetched. This depends on the APK host honouring range requests (it does) and on
+the entry being `STORED` rather than `DEFLATE` (it is, at 976 KB). A DEFLATE
+entry currently fails with instructions rather than being handled.
+
+The APK is sourced from a third-party mirror (APKPure). The version it serves
+(`18.400.22`) is the *app* version; the asset bundle version inside is
+`18.400.11`. These are expected to differ and the asset version is the one that
+matters.
+
+### 1.5 `DATA` — `townhall_levels.csv` has a second inheritance rule
+
+This table carries a table-specific rule on top of the usual block carry-over,
+and getting it wrong is silent.
+
+Each town hall level is its own single-row entity, so ordinary block carry-over
+resets at every level and does nothing. A blank count means **unchanged from
+the previous town hall level**, not zero:
+
+```
+TH1  Cannon = 1
+TH2  Cannon = 2
+TH3  Cannon =        <- still 2
+TH5  Cannon = 3
+```
+
+Read as zero, buildings appear to vanish and reappear as the town hall rises.
+This was caught by the monotonicity check (148 spurious "count drops"), not by
+inspection. Counts are now carried forward across levels in TH order, and
+`tests/carryover.rs` pins the Cannon series `[1,2,2,2,3]`.
+
+### 1.6 `DATA` — Traps do not share the buildings schema
+
+`traps.csv` is a separate 90-column schema with **no `Hitpoints` column** —
+traps are consumed on trigger, not destroyed by damage. They are modelled as a
+distinct `Trap` type rather than forced into `Building`. The brief implied a
+shared schema.
+
+### 1.7 `DATA` — `VillageType` separates home village from Builder Base
+
+`VillageType` is blank/0 for the home village and 1 for the Builder Base (73
+and 32 buildings respectively). The Builder Base is a separate mode with its
+own hall progression, so its entries are excluded from home-village town hall
+checks. This project simulates the home village only.
+
+### 1.8 `DATA` — `heroes.csv` is not a superset of `characters.csv`
+
+The two tables share a parser but not a schema: `heroes.csv` lacks
+`IsUnderground` and several other flags. Columns that legitimately differ are
+read through explicit `*_if_present` accessors; everywhere else a missing
+column stays a hard error, because there it means schema drift. The distinction
+is deliberate — a blanket lenient default would silently null real fields.
+
+Note also the shipped spelling `PreferedTarget*` (one `r`) in `characters.csv`
+versus `PreferredTarget*` in `buildings.csv`. Both spellings are accepted so an
+upstream correction does not silently null the field.
+
+### 1.9 `DERIVED` — 100 game distance units = 1 tile
+
+**The tile scale is stated nowhere in the data.** It is recovered from defences
+whose tile ranges are directly observable in game:
+
+| Building | `AttackRange` | Known in-game range |
+|---|---|---|
+| Cannon | 900 | 9 tiles |
+| Archer Tower | 1000 | 10 tiles |
+| Mortar | 1100 (min 400) | 11 tiles (min 4) |
+| X-Bow | 1400 | 14 tiles |
+
+Four independent anchors agree, and Mortar's minimum range agrees on the same
+scale, so confidence is high. `validate::check_unit_scale` re-checks these on
+every load: if Supercell ever rescales, every distance in the simulator changes
+meaning at once, so this must fail loudly rather than drift.
+
+`AttackSpeed` is milliseconds (Cannon 800 = 0.8 s, matching the game).
+`DPS` is damage per second; damage per hit is `DPS * AttackSpeed / 1000`.
+Damage is **not** in the `Damage` column for defences — that column is blank
+for every defence checked; `DPS` is authoritative.
+
+### 1.10 `ASSUMED` — Freshness is judged by recorded live check
+
+Confidence: medium. The mechanism is sound; the guarantee is only as good as
+the last check.
+
+The gate cannot know the live version offline. `extraction.json` records the
+live version seen when the fingerprint was resolved. Freshness is `CURRENT`
+when it matches, `STALE` when behind, and `UNVERIFIED` when no check was ever
+recorded. `UNVERIFIED` **fails** the gate by default; `--allow-stale`
+downgrades both to warnings for deliberate offline work. There is no
+time-based expiry yet — a check recorded a year ago still reads `CURRENT`.
+That is a known weakness; a max-age threshold should be added.
+
+---
+
+## 2. Pathfinding and targeting
+
+### 2.1 `DATA` — Rule of N is shipped, not assumed
+
+The brief specified `rule_of_n = 3` from community history. The game data
+**confirms it directly**: `globals.csv` has `TARGET_LIST_SIZE = 3`, alongside
+`MAX_TARGET_LIST_SIZE = 6`.
+
+This is no longer an assumption. It is read from the data and reported in the
+provenance banner on every run. The config knob remains, defaulting to the
+extracted value.
+
+Historical note from the brief, retained: Supercell shipped N=5 in November
+2017 and reverted after player backlash. `MAX_TARGET_LIST_SIZE = 6` suggests
+the client can still grow the list under some condition not yet identified —
+**open question**, see §4.1.
+
+### 2.2 `CONFLICT` — Wall cost: 15.5 tiles (brief) vs 10.0 tiles (data)
+
+**Resolution: the extracted value is the default; the brief's value ships as a
+named preset; the calibration harness re-fits both.** Directed by the project
+owner ("do the most possible") when the conflict was raised.
+
+The brief mandated `wall_break_cost_tiles = 15.5`, sourced from single-source
+2017-era community forum testing (a Barbarian preferred a ~15 tile detour over
+breaking one wall, but broke through at ~16+).
+
+The game ships `WALL_COST_BASE = 1000` in `globals.csv`. At the verified scale
+of 100 units/tile that is **10.0 tiles** — a real conflict, not a restatement.
+
+Rule 1 of the brief says data wins over remembered or community numbers, so the
+extracted value is the default. The 15.5 figure is preserved as the
+`community_2017` preset because it is an *empirical behavioural observation*,
+which is a different kind of evidence from a config constant: it is possible
+that `WALL_COST_BASE` is scaled or combined with other terms before reaching
+the pathfinder, in which case 10.0 would be wrong as an effective tile cost.
+Calibration against real replays is what will settle it.
+
+Neither value is confirmed against observed behaviour yet. **Until calibration
+fixtures exist, no wall-cost-sensitive result should be trusted.**
+
+### 2.3 `DATA` — Wall cost is per-unit, and the brief's open question is answered
+
+The brief asked whether wall cost scales with wall level/HP, and said to
+default to flat.
+
+The data answers it: `characters.csv` has a **`WallMovementCost`** column that
+overrides the global per unit. It is populated for exactly 7 of 193 units:
+
+| Value | Units |
+|---|---|
+| 128 | Wall Breaker, Super Wall Breaker |
+| 16 | Wall Wrecker, Log Launcher, Elephant, Elephant Rider, *UnusedSiegePrototype* |
+| *(blank)* | the other 186 — these use `WALL_COST_BASE` |
+
+The cost is keyed on **who is crossing**, not on the wall's level or hitpoints.
+Nothing in the data ties the path cost to wall HP, so **flat with respect to
+wall level is confirmed**, and `wall_cost_scales_with_hp` defaults to `false`
+as the brief specified — now on evidence rather than as a fallback.
+
+Lower values mean cheaper crossing, consistent with siege machines (16)
+smashing through and Wall Breakers (128) being built for it.
+
+### 2.4 `DATA` — Wall jumping is a flag, not a unit list
+
+The brief asked for wall-jumpers to be resolved from a data flag rather than a
+hardcoded list. The flag is **`IsJumper`**, true for **Hog Rider** and **Root
+Rider** in this version. `MovementClass` is resolved from `IsFlying`,
+`IsJumper`, and `IsUnderground` in that precedence order, with no name
+matching anywhere.
+
+Jumpers are given wall cost 0. Note this is an interpretation: the data marks
+them as jumpers but does not state a cost, and they have no `WallMovementCost`
+override. Zero matches observed behaviour.
+
+### 2.5 `DATA` — Further shipped pathing globals
+
+Extracted and surfaced rather than assumed:
+
+| Global | Value | Bearing |
+|---|---|---|
+| `RETARGET_AFTER_DESTROYING_WALL` | `FALSE` | A unit that breaks a wall does **not** retarget. Constrains §2.4 of the brief's path lifecycle. |
+| `USE_WALL_WEIGHTS_FOR_JUMP_SPELL` | `TRUE` | Jump Spell interacts with wall weights rather than plain zeroing. |
+| `UNDERGROUND_UNIT_GROUND_SPEED_PERCENTAGE` | `70` | Miner-class speed while burrowed. |
+| `USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION` | `TRUE` | The client uses a heat map for ranged attack-position selection — the brief's §2.5 model is an approximation of something more elaborate. **Open question**, see §4.2. |
+| `WALL_BREAKER_SMART_RADIUS` | `2500` | Wall Breaker special targeting, 25 tiles. |
+| `WALL_BREAKER_SMART_CNT_LIMIT` | `30` | |
+| `WALL_BREAKER_SMART_RETARGET_LIMIT` | `2000` | |
+| `WALL_BREAKER_USE_ROOMS` | `FALSE` | Room/compartment analysis is off in this version. |
+
+### 2.6 `UNVERIFIED` — Defence retarget delay
+
+`defense_retarget_delay_ms` defaults to **0**, as the brief instructed. Nothing
+in `globals.csv` or `buildings.csv` was found that encodes it.
+
+`characters.csv` has related but distinct columns — `NewTargetAttackDelay`,
+`TargetKilledCooldownTimer`, `RetargetAfterHit` — which are *troop* retarget
+timings, not defence ones. Whether an equivalent exists for defences under
+another name has not been established. Flagged as unverified per the brief.
+
+### 2.7 `ASSUMED` — Half-tile navigation grid
+
+Confidence: medium, taken from the brief.
+
+`subtiles_per_tile = 2` per the brief's §2.3, on the basis of an approximate
+0.5-tile gap around building hitboxes. Nothing in the extracted data states a
+hitbox inset — `buildings.csv` gives `Width`/`Height` in whole tiles only, and
+`AreEdgesUnpassableByVillagers` exists but is a villager-pathing flag, not a
+hitbox measurement. The 0.5-tile gap remains an unverified community
+observation. Configurable; whether 4 subtiles is needed for Valkyrie-style
+channel exploitation is untested.
+
+### 2.8 `DATA` — Trap displacement is three distinct mechanics
+
+The brief treated Spring Trap and Tornado Trap as displacement effects forcing
+a retarget. The data disagrees and separates three behaviours:
+
+| Trap | Columns | Actual effect |
+|---|---|---|
+| Spring Trap | `EjectVictims=FALSE`, `EjectWhenKilling=TRUE`, `EjectRadius=200`, `EjectHousingLimit=10` | **Removes** units from the battle. They do not retarget, because they are gone. |
+| Bomb, Giant Bomb | `Pushback=100`, `PushbackHousingLimit=3` / `30` | **Displaces** survivors — this is the case that forces a path recompute. |
+| Tornado Trap | `DurationMS=5000`, `SpeedMod=100`, no eject/pushback | A timed area effect, not a throw. |
+
+So the brief's "Spring Trap causes displacement → forced retarget" is wrong on
+this version's data: it causes *removal*. Modelled as `removes_victims()` and
+`causes_displacement()` separately, with `immune_by_housing()` for the housing
+thresholds that decide who is too heavy to be affected.
+
+---
+
+## 3. Grid and layout
+
+### 3.1 `ASSUMED` — Map dimensions are not in the shipped data
+
+Confidence: low on the exact numbers. **This is the weakest assumption in the
+project so far.**
+
+The brief's §1.4 said to read map dimensions from `client_globals.csv`. That
+file does not exist, and `logic/globals.csv` contains **no** width, height,
+tile, grid, map-size, border, or playfield key — all 500 keys were searched.
+The dimension is compiled into the client, not shipped as data.
+
+Directed by the project owner to "do all" of the offered options, so:
+
+1. **Default config**: 44×44 total with a 40×40 buildable interior, the common
+   community value, set in `config/grid.toml` rather than in code.
+2. **A validator** rejects any layout exceeding the configured extent, so a
+   wrong constant surfaces as a failure rather than as silently clipped bases.
+3. **A base-link decoder** is planned so the extent can be derived empirically
+   from a real in-game layout link. Until a sample link is supplied this cannot
+   be confirmed, and the 44×40 figure remains unverified.
+
+Every layout-extent-dependent result is provisional until (3) runs.
+
+---
+
+## 4. Open questions
+
+Unresolved. Listed so they are not quietly forgotten.
+
+1. **`MAX_TARGET_LIST_SIZE = 6`** — under what condition does the client grow
+   the target list beyond `TARGET_LIST_SIZE = 3`? If there is a trigger, the
+   two-stage selection has a mode this project does not yet reproduce.
+2. **`USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION = TRUE`** — the real client
+   picks ranged attack positions with a heat map. The brief's "nearest
+   reachable subtile in range" is an approximation of unknown fidelity.
+3. **Defence retarget delay** — see §2.6. No source found.
+4. **Wall cost units** — whether `WALL_COST_BASE` is consumed by the
+   pathfinder in raw distance units, or scaled first. Decides whether §2.2
+   resolves to 10.0 tiles or something else.
+5. **Hitbox inset** — the 0.5-tile gap in §2.7 has no data source.
+6. **Map extent** — §3.1, pending a real base link.
+
+---
+
+## 5. Simulator status
+
+**The simulator is UNCALIBRATED.** No fixture of a real observed attack has
+been compared against simulated output. Every result is directional only, and
+the warning is printed on every run and is not suppressible.
+
+Calibration is Phase 5 and must complete before any optimizer output is
+treated as meaningful.

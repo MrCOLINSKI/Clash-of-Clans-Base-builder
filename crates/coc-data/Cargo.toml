@@ -1,0 +1,22 @@
+[package]
+name = "coc-data"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+
+[dependencies]
+anyhow.workspace = true
+thiserror.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+lzma-rs.workspace = true
+zstd.workspace = true
+sha2.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "validate"
+path = "src/bin/validate.rs"

@@ -1,0 +1,127 @@
+# Pathfinding and targeting constants.
+#
+# No pathing constant may live in Rust source. Values marked `from_data` are
+# defaults extracted from globals.csv and are overridden here only
+# deliberately; leaving them commented out means "use whatever the shipped
+# game data says", which is the correct choice unless you are running an
+# experiment.
+#
+# Extracted values shown in comments are from game version 18.400.11.
+# See ASSUMPTIONS.md for the provenance and confidence of each.
+
+[targeting]
+# Two-stage target selection, the "rule of N".
+#
+# Stage 1 filters to targets relevant to the unit's preferred-target class,
+# then keeps the N nearest by straight-line distance IGNORING WALLS.
+# Stage 2 runs full path costing on only those N survivors.
+#
+# This is the source of most "weird" troop behaviour: a troop walks past a
+# cannon it is standing on to reach a mortar, because the cannon never
+# survived stage 1. A simulator whose troops always choose sensibly has
+# implemented this wrong.
+#
+# Shipped as TARGET_LIST_SIZE = 3 in globals.csv, confirming the value the
+# project brief specified from community history. Supercell shipped 5 in
+# November 2017 and reverted it after backlash.
+rule_of_n = "from_data"          # globals.csv TARGET_LIST_SIZE = 3
+
+# Upper bound the client will grow the candidate list to. The trigger for
+# growing it is not yet identified — see ASSUMPTIONS.md §4.1.
+max_rule_of_n = "from_data"      # globals.csv MAX_TARGET_LIST_SIZE = 6
+
+# Delay between a defence losing its target and acquiring the next one.
+# NOT DOCUMENTED ANYWHERE. Nothing in the shipped data was found to encode it.
+# Defaults to zero per the project brief and is flagged unverified.
+defense_retarget_delay_ms = 0
+
+[walls]
+# Additive path cost of crossing one wall segment, in game distance units
+# (100 units = 1 tile — see ASSUMPTIONS.md §1.9).
+#
+# CONFLICT, see ASSUMPTIONS.md §2.2. The project brief mandated 15.5 tiles
+# from 2017 community forum testing; the game ships WALL_COST_BASE = 1000,
+# which is 10.0 tiles. The extracted value is the default because shipped data
+# outranks remembered community numbers. Neither is confirmed against observed
+# behaviour yet.
+break_cost = "from_data"         # globals.csv WALL_COST_BASE = 1000 (10.0 tiles)
+
+# Whether wall crossing cost scales with the wall's level or hitpoints.
+#
+# ANSWERED BY DATA: no. characters.csv keys the cost to the unit crossing
+# (WallMovementCost), and nothing ties it to wall HP. Kept as a knob so the
+# calibration harness can test the alternative.
+cost_scales_with_hp = false
+
+# Wall jumpers (IsJumper in characters.csv: Hog Rider, Root Rider) cross at
+# this cost. Zero matches observed behaviour; the data flags them as jumpers
+# but states no cost.
+jumper_cost = 0
+
+# Whether a unit retargets after destroying a wall.
+retarget_after_destroying_wall = "from_data"   # globals.csv = FALSE
+
+# Whether the Jump Spell uses wall weights rather than plain zeroing.
+use_wall_weights_for_jump_spell = "from_data"  # globals.csv = TRUE
+
+[walls.presets]
+# Named alternatives the calibration harness can re-fit against. Selecting one
+# overrides `break_cost` above.
+#
+# The 2017 community figure: a Barbarian preferred a ~15 tile detour over
+# breaking one wall, but broke through at ~16+ tiles. Single-source,
+# 2017-era, behavioural rather than a config constant — which is why it is
+# retained rather than discarded, since it measures the *effective* cost.
+community_2017 = 1550            # 15.5 tiles
+
+# The shipped constant, stated explicitly for symmetry.
+shipped = 1000                   # 10.0 tiles
+
+[grid]
+# Navigation grid resolution. Buildings do not fill their footprint
+# edge-to-edge and ground troops path through the gaps, so the nav grid must
+# be finer than one tile.
+#
+# ASSUMED, not from data: the ~0.5-tile hitbox inset is a community
+# observation with no shipped source. Whether 4 is needed to reproduce
+# Valkyrie channel exploitation is untested. See ASSUMPTIONS.md §2.7.
+subtiles_per_tile = 2
+
+# Game distance units per tile. Derived from four defence ranges and
+# re-verified on every data load; changing this by hand will fail validation.
+units_per_tile = 100
+
+[movement]
+# Speed multiplier for burrowed units, as a percentage.
+underground_speed_percent = "from_data"   # globals.csv = 70
+
+[attack_position]
+# The client uses a heat map to choose ranged attack positions
+# (USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION = TRUE). This project instead
+# picks the nearest reachable subtile from which the target is in range, which
+# is an approximation of unknown fidelity — see ASSUMPTIONS.md §4.2.
+#
+# When a target is in range but unreachable, the unit discards it and takes
+# the next candidate.
+strategy = "nearest_reachable_in_range"
+discard_unreachable_targets = true
+
+[wall_breaker]
+# Wall Breaker special targeting, all from globals.csv.
+smart_radius = "from_data"          # WALL_BREAKER_SMART_RADIUS = 2500 (25 tiles)
+smart_count_limit = "from_data"     # WALL_BREAKER_SMART_CNT_LIMIT = 30
+smart_retarget_limit = "from_data"  # WALL_BREAKER_SMART_RETARGET_LIMIT = 2000
+use_rooms = "from_data"             # WALL_BREAKER_USE_ROOMS = FALSE
+
+[lifecycle]
+# A path is computed once on target acquisition and then followed.
+# Recompute is triggered only by these events.
+recompute_on_target_destroyed = true
+recompute_on_displacement = true      # pushback only; see ASSUMPTIONS.md §2.8
+recompute_on_jump_spell = true
+recompute_on_spawn = true
+
+# A Jump Spell landing retargets every affected unit at once. This is the case
+# the rule-of-N exists to make cheap, and is benchmarked at 250 simultaneous
+# retargets.
+mass_retarget_benchmark_units = 250
