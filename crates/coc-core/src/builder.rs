@@ -66,23 +66,27 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
     let _ = &thl;
     layout.wall_level = level_for(data, "Wall", th).unwrap_or(0);
     let mut walls = Vec::new();
-    // Ring counts are chosen to spend most of the wall budget: a TH17 base
-    // with only three rings leaves 70+ walls unused and reads as one open
-    // compartment rather than the layered one a real base has.
-    let rings: &[(i32, i32)] = if wall_budget > 300 {
-        &[(17, 26), (13, 30), (9, 34), (5, 38)]
-    } else if wall_budget > 220 {
-        &[(15, 28), (10, 33), (6, 37)]
-    } else if wall_budget > 150 {
-        &[(14, 29), (9, 34)]
-    } else if wall_budget > 60 {
-        &[(15, 28), (11, 32)]
-    } else if wall_budget > 0 {
-        &[(16, 27)]
-    } else {
-        &[]
+    // Rings are generated from the outside in until the budget is spent,
+    // rather than picked from a fixed table. A fixed table left a TH7 base
+    // using 148 of its 175 walls and a TH12 base 248 of 300, which reads as
+    // one open compartment instead of the layered shell a real base has.
+    let rings: Vec<(i32, i32)> = {
+        let mut out = Vec::new();
+        let mut spent = 0usize;
+        let mut a = 5;
+        let mut b = ORIGIN + BUILDABLE - 5;
+        while spent < wall_budget && b - a >= 8 {
+            // Perimeter of the ring, less the gaps punched into it.
+            let per = ((b - a) * 4) as usize;
+            out.push((a, b));
+            spent += per - per / 13;
+            a += 4;
+            b -= 4;
+        }
+        out
     };
-    'outer: for &(a, b) in rings {
+
+    'outer: for &(a, b) in &rings {
         for x in a..=b {
             for y in [a, b] {
                 if walls.len() >= wall_budget {
@@ -122,7 +126,13 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         .filter(|(n, _)| *n != "Wall")
         .map(|(n, c)| (n.to_string(), c))
         .collect();
-    names.sort_by_key(|(n, _)| (priority(n), n.clone()));
+    // Within a priority tier, larger footprints go down first. Placing them
+    // last starved the 4x4s: at TH14+ the Siege Workshop and a fourth Army
+    // Camp had nowhere left to fit once the 3x3s had packed the space.
+    names.sort_by_key(|(n, _)| {
+        let (w, h, ..) = dims(data, n);
+        (priority(n), std::cmp::Reverse(w * h), n.clone())
+    });
 
     for (name, count) in &names {
         let name = name.as_str();
@@ -240,6 +250,24 @@ mod tests {
         assert_eq!(a, b, "same seed must produce the same layout");
         let c = seed(&d, 12, 43);
         assert_ne!(a, c, "a different seed should differ");
+    }
+
+    #[test]
+    fn every_permitted_structure_finds_a_place() {
+        let Ok(d) = GameData::load_default() else { return };
+        for th in 1..=d.max_townhall() {
+            let l = seed(&d, th, 42);
+            for (name, allowed) in d.home_counts(th) {
+                if name == "Wall" || level_for(&d, name, th).is_none() {
+                    continue;
+                }
+                let placed = l.placements.iter().filter(|p| p.name == name).count() as i64;
+                assert_eq!(
+                    placed, allowed,
+                    "TH{th}: {name} placed {placed} of {allowed}; the grid ran out of room"
+                );
+            }
+        }
     }
 
     #[test]
