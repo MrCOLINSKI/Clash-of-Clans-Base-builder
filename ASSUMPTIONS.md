@@ -635,6 +635,62 @@ This is presentation, not simulation: it changes how the base is drawn, never
 where anything sits. Placement, legality and every metric read the same tile
 coordinates regardless.
 
+### 6.15 `DATA` — The depth key was not a valid ordering
+
+The renderer sorted structures by the screen y of their footprint's bottom
+vertex, `x + y + w + h`. That is only correct when every object is the same
+size, and it is not: a 4x4 Town Hall reaches further down the screen than a 1x1
+wall standing well in front of it, so the wall was drawn first and appeared to
+sit behind. Across the eighteen layouts that key ordered **400,392 pairs** the
+wrong way round.
+
+In this projection +x runs down-right and +y down-left, so A is strictly behind
+B when A ends before B begins on either axis:
+
+```
+A behind B  <=>  A.x + A.w <= B.x  or  A.y + A.h <= B.y
+```
+
+That is a *partial* order — plenty of pairs are unrelated — which is exactly why
+no comparator can express it and why the sort could not be fixed by changing the
+key. The draw list is now a topological sort of that relation, cached per
+selection. Verified in-page across all 18 town halls: zero violations.
+
+### 7.3 `DATA` — Village JSON is real, but old dumps decode to nonsense
+
+The in-game layout format was found in the open, in `coc-base-analyser`'s test
+fixtures: `{data, id, lvl, x, y, l1x, l1y … l5x, l5y}` — a data id, a level, the
+active tile position, and the five saved layouts. `data - 1000000` is the row
+index into `buildings.csv`; traps are `12000000+`.
+
+So a layout importer is straightforward — **for a dump from the matching game
+version**. Row indices shift whenever Supercell inserts a building, and the
+fixtures are TH9-era. Decoded against 18.400.11 the TH9 sample yields 225
+"Barracks" (those are the walls), four Town Halls and five Hero Halls. Nothing
+about that is recoverable without the CSVs the dump was made against.
+
+Combined with §7.1 (a base link is a 24-byte server-side identifier) this closes
+the question: **current meta layouts cannot be fetched.** The coordinates exist
+only inside an authenticated session's village JSON, and no current-version dump
+is published anywhere I could find.
+
+### 3.7 `DATA` — Meta design rules, applied where they are mechanical
+
+What *can* be taken from current base-design practice is the reasoning, and one
+rule in it is purely mechanical and was being violated outright: **same-type
+defences must not share a compartment.** Stacking both Scattershots, or all four
+X-Bows, in one room means a single freeze or one Ice Golem stall removes the
+whole splash core at once.
+
+First-fit placement did exactly that. Compartments are now chosen by which holds
+fewest of the structure being placed, so Scattershots and Air Defences land one
+per room. TH17's war score moved 0.87 -> 0.91 on that change alone.
+
+The rest of the published meta advice — asymmetric compartments, offset town
+halls, traps placed against pathing logic — is judgement about how attacks
+actually run, and this simulator is uncalibrated (§5). Encoding it now would be
+guessing dressed as tuning, so it is recorded here and not implemented.
+
 ---
 
 ## 4. Open questions

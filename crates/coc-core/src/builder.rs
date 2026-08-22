@@ -113,6 +113,10 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         })
         .sum();
     let (walls, cells, box_) = wall_lattice(wall_budget, core_area);
+    // What each compartment already holds, so same-type defences can be split
+    // across rooms rather than stacked in one.
+    let mut held: Vec<std::collections::HashMap<String, usize>> =
+        vec![std::collections::HashMap::new(); cells.len()];
     for &(x, y) in &walls {
         if let Some(c) = idx(x, y) {
             occ[c] = 2;
@@ -136,14 +140,14 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
                 // the gaps between compartments are for.
                 place_trap(&occ, &box_, w, h, &mut rng)
             } else if inside {
-                place_in_cells(&occ, &cells, w, h, priority(name))
+                place_in_cells(&occ, &cells, &mut held, name, w, h, priority(name))
                     .or_else(|| place_outside(&occ, &box_, w, h))
             } else {
                 // Collectors, camps and huts live outside the walls, as they do
                 // in every real base. Sending them through the compartments
                 // first is what pushed the defences out.
                 place_outside(&occ, &box_, w, h)
-                    .or_else(|| place_in_cells(&occ, &cells, w, h, 4))
+                    .or_else(|| place_in_cells(&occ, &cells, &mut held, name, w, h, 4))
             };
             let rect = rect.or_else(|| find_spot(&occ, w, h, ring_for(name), &mut rng));
             if let Some(rect) = rect {
@@ -192,24 +196,46 @@ fn goes_inside(name: &str, class: &str) -> bool {
 
 /// Finds room inside the wall compartments, working outward from the centre.
 ///
-/// `rank` biases where a structure lands: the town hall and heavy defences
-/// take the core cells, everything else fills outward. Falling back to the
-/// open ground outside the lattice is the caller's job.
-fn place_in_cells(occ: &[u8], cells: &[Rect], w: i32, h: i32, rank: u8) -> Option<Rect> {
+/// `rank` biases where a structure lands: the town hall and heavy defences take
+/// the core cells, everything else fills outward. Falling back to the open
+/// ground outside the lattice is the caller's job.
+///
+/// Within that bias, a structure prefers the compartment holding **fewest of
+/// its own kind**. First-fit put all four X-Bows in one room and both
+/// Scattershots side by side, and that is the single most punished mistake in
+/// current war base design: one freeze or one Ice Golem stall takes out the
+/// whole splash core at once. Spreading them forces an attacker to pick a side.
+fn place_in_cells(
+    occ: &[u8],
+    cells: &[Rect],
+    held: &mut [std::collections::HashMap<String, usize>],
+    name: &str,
+    w: i32,
+    h: i32,
+    rank: u8,
+) -> Option<Rect> {
     // Low-rank structures start at the centre; high-rank ones skip past the
     // core so they do not squat in the compartments the defences need.
     let skip = match rank {
-        0 => 0,
-        1 => 0,
+        0 | 1 => 0,
         2 => 1,
         3 => 2,
         _ => cells.len() / 3,
     };
-    for cell in cells.iter().skip(skip.min(cells.len())) {
+    let usable = skip.min(cells.len().saturating_sub(1));
+
+    // Order candidate compartments by how many of this structure they already
+    // hold, then by the centre-first order the lattice was built in.
+    let mut order: Vec<usize> = (usable..cells.len()).collect();
+    order.sort_by_key(|&i| (held[i].get(name).copied().unwrap_or(0), i));
+
+    for i in order {
+        let cell = &cells[i];
         for y in cell.y..cell.bottom().saturating_sub(h - 1) {
             for x in cell.x..cell.right().saturating_sub(w - 1) {
                 let r = Rect::new(x, y, w, h);
                 if crate::legality::can_place(&r, occ) {
+                    *held[i].entry(name.to_string()).or_default() += 1;
                     return Some(r);
                 }
             }
@@ -652,6 +678,42 @@ mod tests {
                 stores.iter().all(|p| inside(p)),
                 "TH{th} leaves a storage outside the walls"
             );
+        }
+    }
+
+    #[test]
+    fn same_type_defences_are_split_across_compartments() {
+        // The most punished mistake in current war base design: stacking both
+        // Scattershots, or all four X-Bows, in one room means a single freeze or
+        // one Ice Golem stall removes the whole splash core at once. First-fit
+        // placement did exactly that.
+        let Ok(d) = GameData::load_default() else { return };
+        for th in [13, 15, 17] {
+            let l = seed(&d, th, 0xC0FFEE);
+            let mut per_room: std::collections::HashMap<(String, i32, i32), usize> =
+                std::collections::HashMap::new();
+            for p in l.placements.iter().filter(|p| p.is_defense()) {
+                // A coarse 10-tile bucket stands in for "the same compartment".
+                *per_room
+                    .entry((p.name.clone(), p.rect.x / 10, p.rect.y / 10))
+                    .or_default() += 1;
+            }
+            for name in ["Scattershot", "Eagle Artillery", "Monolith"] {
+                let total = l.placements.iter().filter(|p| p.name == name).count();
+                if total < 2 {
+                    continue;
+                }
+                let worst = per_room
+                    .iter()
+                    .filter(|((n, _, _), _)| n == name)
+                    .map(|(_, c)| *c)
+                    .max()
+                    .unwrap_or(0);
+                assert!(
+                    worst < total,
+                    "TH{th}: all {total} {name} sit in one compartment"
+                );
+            }
         }
     }
 
