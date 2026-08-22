@@ -106,7 +106,11 @@ pub fn validate(layout: &Layout, data: &GameData) -> Vec<Violation> {
         *used.entry(p.name.as_str()).or_default() += 1;
     }
     for (name, n) in &used {
-        let allowed = th.count_of(name);
+        // A village has exactly one Town Hall, and `townhall_levels.csv` does
+        // not say so: the table lists what a hall *permits you to build*, and
+        // the hall is not one of those things. Reading the allowance straight
+        // from the table makes the Town Hall illegal in its own village.
+        let allowed = if *name == "Town Hall" { 1 } else { th.count_of(name) };
         if allowed == 0 && data.building(name).is_none() && data.trap(name).is_none() {
             v.push(Violation::UnknownStructure {
                 name: (*name).to_string(),

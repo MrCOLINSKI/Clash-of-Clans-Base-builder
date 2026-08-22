@@ -448,6 +448,80 @@ Also `ASSUMED`: destruction percentage does not count walls. A base with 300
 walls would otherwise be near-impossible to three-star, which is not how the
 game plays — but this is reasoning from behaviour, not from data.
 
+### 3.2 `DATA` — The Town Hall is not in the town hall table
+
+Found by a test that asked every generated base for its Town Hall and got
+`None` from all of them.
+
+`townhall_levels.csv` is a table of what a hall **permits you to build**, keyed
+by hall level. The hall itself is not in it, which is correct — a Town Hall does
+not permit a Town Hall. But the layout generator read its whole shopping list
+from that table, so it built 156 structures at TH17 and not one of them was the
+Town Hall. Every base was legal, scored fine on six of seven metrics, and was
+missing the building the game is named after. `th_depth` had been reading 0.00
+throughout and nobody had asked why.
+
+Two consequences, both now explicit in code:
+
+- The hall is prepended to the build list rather than read from the table.
+- Its level is the town hall level by definition. Running it through the
+  `TownHallLevel` requirement column instead returns level 2 at TH1, because
+  that column answers "what hall do you need in order to build this", which for
+  the hall itself is not a meaningful question.
+
+The legality validator needed the same exception, or the hall it had just
+placed came back as "1 placed but only 0 allowed".
+
+### 3.3 `ASSUMED` — What goes inside the walls
+
+Confidence: high, behavioural. Not derivable from the data.
+
+Walls are scarce: 325 tiles at TH17 against 1004 tiles of structures. They
+cannot enclose everything, so *what they enclose* is most of what makes a layout
+good or bad — and nothing in the shipped data expresses that choice.
+
+Inside: the town hall, every defence, the storages, clan castle, hero hall, pet
+house. Outside: gold mines, elixir collectors, dark elixir drills, army camps,
+builder huts, and the army buildings (barracks, laboratory, spell factories,
+siege workshop, blacksmith).
+
+The reasoning is that collectors hold a trickle and are meant to be raided,
+while army buildings have no defensive value at all; a compartment spent on
+either is a compartment a defence does not get. Before this split existed, the
+generator sent everything through the compartments in priority order and the
+walls filled up with collectors.
+
+Sizing follows from the same split: the lattice is sized to hold the *inside*
+set, and it is sized by **capacity, not area**. Almost every structure is 3x3,
+so a 7-wide compartment holds four of them and wastes thirteen tiles — 36 of 49,
+not 49. Sizing on raw area is what left TH9 with a lattice that was big enough
+on paper and had a third of its defences outside the walls.
+
+Among lattices that hold the core, the one with the **smallest compartments**
+wins, and leftover budget is spent subdividing the widest ones. Compartment size
+is the defensive variable: one Jump Spell into a twelve-wide cell opens the base;
+the same spell into a six-wide cell opens one room.
+
+### 3.4 `DATA` — A collector is not a storage
+
+`BuildingClass == "Resource"` covers Gold Storage and Gold Mine alike. The
+`loot_protected` metric tested that class, and at TH17 that is 17 collectors
+against 9 storages — so the metric was mostly scoring how well the base defended
+its mines. Now keyed on the name ending in `Storage`, which moved TH17's
+`loot_protected` from 0.73 to 1.00 and made it mean what its name says.
+
+### 6.10 `APPROXIMATED` — Wall colours in the renderer
+
+The procedural wall fallback used a single grey ramp that darkened with level.
+At level 18 it came out near-black and flat, which in isometric — where the top
+face is most of what you see — read as paving, not as a wall. Reported by the
+project owner as "walls always look like that".
+
+Replaced with a per-tier palette and a taller capped block. The palette is
+**approximated**: readable stand-ins for each tier's material, not sampled from
+the artwork. The `Wall texture` toggle draws the real extracted sprites and is
+off by default, because it does not render acceptably on the owner's phone.
+
 ---
 
 ## 4. Open questions

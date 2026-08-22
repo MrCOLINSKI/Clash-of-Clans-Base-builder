@@ -96,8 +96,15 @@ impl Placement {
     }
 
     /// Whether this holds loot worth protecting.
+    ///
+    /// Storages only. `BuildingClass == "Resource"` also covers Gold Mines,
+    /// Elixir Collectors and Dark Elixir Drills, which is what this used to
+    /// test — and at TH17 that is 17 collectors against 9 storages, so
+    /// `loot_protected` was mostly scoring how well the base defended its
+    /// mines. Collectors hold a trickle, sit outside the walls in every real
+    /// base, and are meant to be raided.
     pub fn is_storage(&self) -> bool {
-        self.class == "Resource"
+        self.class == "Resource" && self.name.ends_with("Storage")
     }
 }
 
