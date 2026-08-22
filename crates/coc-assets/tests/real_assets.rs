@@ -73,22 +73,54 @@ fn sctx_payload_is_astc_block_data() {
 }
 
 #[test]
-fn sctx_dimensions_remain_genuinely_ambiguous_from_size_alone() {
+fn sctx_metadata_yields_real_dimensions() {
     let Some(d) = sample("chr_cannon_cart_0.sctx") else {
         return;
     };
     let t = sctx::decode(&d).expect("SCTX decodes");
+    let m = t.meta.expect("metadata parses");
 
-    // This is the open question, pinned as a test so it is not forgotten:
-    // payload size admits many dimension pairs, so the real width must come
-    // from the FlatBuffers metadata rather than arithmetic.
-    let cands = t.dimension_candidates(4, 4);
+    // Read through the FlatBuffers vtable, not a fixed offset. The offset
+    // approach appeared to work on one file and silently failed on another.
+    assert_eq!((m.width, m.height), (1008, 1376));
+    assert_eq!(m.payload_len as usize, t.payload.len());
+}
+
+#[test]
+fn sctx_block_footprint_is_astc_6x6() {
+    let Some(d) = sample("chr_cannon_cart_0.sctx") else {
+        return;
+    };
+    let t = sctx::decode(&d).expect("SCTX decodes");
+    let m = t.meta.expect("metadata");
+
+    // This is what identified the footprint: the dimensions account for the
+    // payload exactly at 6x6 and at no other footprint.
+    assert_eq!(m.footprint(), (6, 6));
+    assert_eq!(m.expected_blocks() as usize, t.block_count());
+    assert!(m.is_consistent(t.payload.len()));
+
+    // 168 x 230 blocks for 1008 x 1376 pixels.
+    assert_eq!(m.width.div_ceil(6) * m.height.div_ceil(6), 38_640);
+}
+
+#[test]
+fn sctx_decodes_to_a_full_rgba_image() {
+    let Some(d) = sample("chr_cannon_cart_0.sctx") else {
+        return;
+    };
+    let t = sctx::decode(&d).expect("SCTX decodes");
+    let m = t.meta.expect("metadata");
+    let rgba = t.to_rgba().expect("ASTC decodes");
+
+    assert_eq!(rgba.len(), (m.width as usize) * (m.height as usize) * 4);
+    // A sprite atlas is mostly transparent gutter but must carry real pixels.
+    let opaque = rgba.chunks_exact(4).filter(|p| p[3] > 8).count();
+    assert!(opaque > 1000, "only {opaque} opaque pixels; decode looks empty");
     assert!(
-        cands.len() > 1,
-        "if this ever returns one candidate, dimensions became derivable"
+        opaque < rgba.len() / 4,
+        "every pixel opaque; alpha channel looks wrong"
     );
-    // 672x920 accounts for the payload exactly, but so do others.
-    assert!(cands.contains(&(672, 920)) || cands.contains(&(920, 672)));
 }
 
 #[test]
