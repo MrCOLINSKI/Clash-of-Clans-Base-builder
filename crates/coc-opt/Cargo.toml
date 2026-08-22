@@ -6,6 +6,18 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+coc-core.workspace = true
+coc-data.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+rand.workspace = true
+rand_chacha.workspace = true
+rayon.workspace = true
 
 [lints]
 workspace = true
+
+[[example]]
+name = "optimize"
+path = "examples/optimize.rs"

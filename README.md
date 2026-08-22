@@ -14,12 +14,12 @@ tests pass.
 | Phase | Component | State |
 |---|---|---|
 | 1 | `coc-data` — fetch, decompress, carry-over parse, validation gate | **complete, 36 tests green** |
-| 2 | `coc-core` — grid, layout, placement legality | not started |
+| 2 | `coc-core` — grid, layout, placement legality, metrics | **complete, 14 tests green** |
 | 3 | `coc-sim` — pathing per spec | not started |
 | 4 | `coc-sim` — combat, traps, spells, heroes | not started |
 | 5 | Calibration harness | not started |
 | 6 | `coc-meta` — attack strategies | not started |
-| 7 | `coc-opt` — GA / annealing | not started |
+| 7 | `coc-opt` — simulated annealing over legal layouts | **first pass, 4 tests green** |
 | 8 | `coc-render` + CLI | not started |
 | — | `coc-assets` — art container decoders (parallel track) | containers parsed, 26 tests green |
 
@@ -53,6 +53,25 @@ Notably, two things the brief treated as assumptions turned out to be **shipped
 in the game data**: the rule-of-N candidate count (`TARGET_LIST_SIZE = 3`) and
 the wall traversal cost (`WALL_COST_BASE = 1000`). The latter conflicts with
 the specified value; see `ASSUMPTIONS.md` §2.2.
+
+## Layout optimization
+
+`coc-opt` anneals layouts against geometric metrics from `coc-core` — coverage,
+town hall depth, wall enclosure, quadrant balance, perimeter exposure —
+profile-weighted for war, farming or trophy.
+
+```
+cargo run --release -p coc-opt --example optimize -- layouts.json war
+```
+
+All 18 town halls tune in about 3.5 seconds. Every candidate passes the
+legality validator before scoring, so the search cannot emit an illegal base;
+the example asserts it on every emitted layout.
+
+**This is a geometric proxy, not simulated destruction.** The project's rule
+that real fitness needs a calibrated simulator still holds — what this replaces
+is hand-placement, giving a repeatable ruler rather than a guess. Battle-based
+fitness slots in behind the `Objective` trait without touching the search.
 
 ## Art extraction
 
