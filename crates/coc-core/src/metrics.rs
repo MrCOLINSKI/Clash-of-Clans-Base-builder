@@ -272,7 +272,7 @@ pub fn exposure(layout: &Layout) -> Exposure {
             0.0
         } else {
             let ratio = mean / max;
-            ((1.0 - (ratio - 0.40) / 0.60)).clamp(0.0, 1.0)
+            (1.0 - (ratio - 0.40) / 0.60).clamp(0.0, 1.0)
         }
     };
 
