@@ -1,0 +1,457 @@
+{
+ "Town Hall": {
+  "key": "Town Hall",
+  "kebab": "town-hall",
+  "cls": "Town Hall",
+  "cat": "town-hall",
+  "levels": 18
+ },
+ "Clan Castle": {
+  "key": "Alliance Castle",
+  "kebab": "alliance-castle",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 14
+ },
+ "Gold Storage": {
+  "key": "Gold Storage",
+  "kebab": "gold-storage",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 19
+ },
+ "Elixir Storage": {
+  "key": "Elixir Storage",
+  "kebab": "elixir-storage",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 19
+ },
+ "Dark Elixir Storage": {
+  "key": "Dark Elixir Storage",
+  "kebab": "dark-elixir-storage",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 13
+ },
+ "Gold Mine": {
+  "key": "Gold Mine",
+  "kebab": "gold-mine",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 17
+ },
+ "Elixir Collector": {
+  "key": "Elixir Pump",
+  "kebab": "elixir-pump",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 17
+ },
+ "Dark Elixir Drill": {
+  "key": "Dark Elixir Pump",
+  "kebab": "dark-elixir-pump",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 11
+ },
+ "Army Camp": {
+  "key": "Troop Housing",
+  "kebab": "troop-housing",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 14
+ },
+ "Laboratory": {
+  "key": "Laboratory",
+  "kebab": "laboratory",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 16
+ },
+ "Barracks": {
+  "key": "Barrack",
+  "kebab": "barrack",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 19
+ },
+ "Dark Barracks": {
+  "key": "Dark Elixir Barrack",
+  "kebab": "dark-elixir-barrack",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 13
+ },
+ "Spell Factory": {
+  "key": "Spell Forge",
+  "kebab": "spell-forge",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 9
+ },
+ "Dark Spell Factory": {
+  "key": "Mini Spell Factory",
+  "kebab": "mini-spell-factory",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 8
+ },
+ "Siege Workshop": {
+  "key": "SiegeWorkshop",
+  "kebab": "siegeworkshop",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 9
+ },
+ "Hero Hall": {
+  "key": "Hero Hall",
+  "kebab": "hero-hall",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 12
+ },
+ "Pet House": {
+  "key": "Pet Shop",
+  "kebab": "pet-shop",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 12
+ },
+ "Blacksmith": {
+  "key": "Smithy",
+  "kebab": "smithy",
+  "cls": "Army",
+  "cat": "army",
+  "levels": 10
+ },
+ "Builders Hut": {
+  "key": "Worker Building",
+  "kebab": "worker-building",
+  "cls": "Worker",
+  "cat": "worker",
+  "levels": 8
+ },
+ "BOBs Hut": {
+  "key": "Builder6Home",
+  "kebab": "builder6home",
+  "cls": "Worker2",
+  "cat": "worker2",
+  "levels": 1
+ },
+ "Helper Hut": {
+  "key": "VillagerApprenticeHQ",
+  "kebab": "villagerapprenticehq",
+  "cls": "Helper",
+  "cat": "helper",
+  "levels": 1
+ },
+ "Wall": {
+  "key": "Wall",
+  "kebab": "wall",
+  "cls": "Wall",
+  "cat": "wall",
+  "levels": 19
+ },
+ "Cannon": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 21
+ },
+ "Archer Tower": {
+  "key": "Archer Tower",
+  "kebab": "archer-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 21
+ },
+ "Mortar": {
+  "key": "Mortar",
+  "kebab": "mortar",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 18
+ },
+ "Air Defense": {
+  "key": "Air Defense",
+  "kebab": "air-defense",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 16
+ },
+ "Wizard Tower": {
+  "key": "Wizard Tower",
+  "kebab": "wizard-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 17
+ },
+ "Hidden Tesla": {
+  "key": "Tesla Tower",
+  "kebab": "tesla-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 17
+ },
+ "Air Sweeper": {
+  "key": "Air Blaster",
+  "kebab": "air-blaster",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 7
+ },
+ "Bomb Tower": {
+  "key": "Bomb Tower",
+  "kebab": "bomb-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 13
+ },
+ "X-Bow": {
+  "key": "Bow",
+  "kebab": "bow",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 13
+ },
+ "Inferno Tower": {
+  "key": "Dark Tower",
+  "kebab": "dark-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 12
+ },
+ "Eagle Artillery": {
+  "key": "Ancient Artillery",
+  "kebab": "ancient-artillery",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 7
+ },
+ "Scattershot": {
+  "key": "Scattershot",
+  "kebab": "scattershot",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 7
+ },
+ "Spell Tower": {
+  "key": "Spell Tower",
+  "kebab": "spell-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 4
+ },
+ "Monolith": {
+  "key": "Monolith",
+  "kebab": "monolith",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 5
+ },
+ "Multi Archer Tower": {
+  "key": "Merged Archer Tower",
+  "kebab": "merged-archer-tower",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 4
+ },
+ "Ricochet Cannon": {
+  "key": "Merged Cannon",
+  "kebab": "merged-cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 4
+ },
+ "Firespitter": {
+  "key": "Firespitter",
+  "kebab": "firespitter",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 3
+ },
+ "Barbarian King Altar": {
+  "key": "Hero Altar Barbarian King",
+  "kebab": "hero-altar-barbarian-king",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Archer Queen Altar": {
+  "key": "Hero Altar Archer Queen",
+  "kebab": "hero-altar-archer-queen",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Grand Warden Altar": {
+  "key": "Hero Altar Grand Warden",
+  "kebab": "hero-altar-grand-warden",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Royal Champion Altar": {
+  "key": "Hero Altar Royal Champion",
+  "kebab": "hero-altar-royal-champion",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Communications mast": {
+  "key": "Communications mast",
+  "kebab": "communications-mast",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Goblin Hall": {
+  "key": "Goblin boss TH",
+  "kebab": "goblin-boss-th",
+  "cls": "Npc Town Hall",
+  "cat": "npc-town-hall",
+  "levels": 2
+ },
+ "Goblin Hut": {
+  "key": "Communications mast",
+  "kebab": "communications-mast",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Tutorial Cannon": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Goblin Castle": {
+  "key": "Goblin Castle",
+  "kebab": "goblin-castle",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Foreboding Cave": {
+  "key": "Dragon Cave",
+  "kebab": "dragon-cave",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Goblin Boss TH": {
+  "key": "Goblin boss TH",
+  "kebab": "goblin-boss-th",
+  "cls": "Npc Town Hall",
+  "cat": "npc-town-hall",
+  "levels": 1
+ },
+ "TroopCage": {
+  "key": "TroopCage",
+  "kebab": "troopcage",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "DragonLair": {
+  "key": "Dragon Cave",
+  "kebab": "dragon-cave",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "SpellCage": {
+  "key": "SpellCage",
+  "kebab": "spellcage",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "PEKKA's Playhouse": {
+  "key": "Dragon Cave",
+  "kebab": "dragon-cave",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Sour Elixir Cauldron": {
+  "key": "ClashoweenBuilding",
+  "kebab": "clashoweenbuilding",
+  "cls": "Resource",
+  "cat": "resource",
+  "levels": 1
+ },
+ "PetCage": {
+  "key": "PetCage",
+  "kebab": "petcage",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "DefenseTroopCage": {
+  "key": "DefenseTroopCage",
+  "kebab": "defensetroopcage",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "DirectHeroChallengeMainBuilding": {
+  "key": "DirectHeroChallengeMainBuilding",
+  "kebab": "directherochallengemainbuilding",
+  "cls": "Npc",
+  "cat": "npc",
+  "levels": 1
+ },
+ "Town Hall 18 Teaser": {
+  "key": "Town Hall",
+  "kebab": "town-hall",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Town Hall 17 Upgrading": {
+  "key": "Town Hall",
+  "kebab": "town-hall",
+  "cls": "NonFunctional",
+  "cat": "non-functional",
+  "levels": 1
+ },
+ "Unused2": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 1
+ },
+ "Unused3": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 1
+ },
+ "Unused4": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 1
+ },
+ "Unused5": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 1
+ },
+ "Unused6": {
+  "key": "Cannon",
+  "kebab": "cannon",
+  "cls": "Defense",
+  "cat": "defense",
+  "levels": 1
+ }
+}

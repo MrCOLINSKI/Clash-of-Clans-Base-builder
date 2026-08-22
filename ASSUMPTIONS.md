@@ -443,50 +443,70 @@ ZSTD frame after the metadata means compressed, its absence means raw. If a
 future format adds a third mode this fails loudly on the length check rather
 than producing garbage.
 
-### 6.7 `UNVERIFIED` — Sprite-to-building mapping is not solved
+### 6.7 `DERIVED` — Portrait identity is matched by TID; images come from a third party
 
-Confidence: none. This is the single thing standing between the renderer and
-a 1:1 picture, and it is not solved.
+**The renderer now shows the right building at the right level.** How it gets
+there needs stating plainly, because the identity and the pixels have
+different provenance.
 
-The `.sc` container is now largely understood. What follows is what was
-verified against `sc/buildings.sc` at 18.400.11, so the remaining work starts
-from a known position rather than from scratch.
+**Identity: data-driven, from the game's own tables.** Each structure is matched
+to its portrait by **TID** — `TID_BUILDING_CANNON` and so on — not by name or
+by eye. That matters because the display names diverge from the internal keys:
 
-**Solved.**
+| Our name | Internal key | Slug |
+|---|---|---|
+| X-Bow | Bow | `bow` |
+| Inferno Tower | Dark Tower | `dark-tower` |
+| Clan Castle | Alliance Castle | `alliance-castle` |
+| Army Camp | Troop Housing | `troop-housing` |
+| Eagle Artillery | Ancient Artillery | `ancient-artillery` |
+| Hidden Tesla | Tesla Tower | `tesla-tower` |
+| Bomb | Mine | `mine` |
+| Spring Trap | Ejector | `ejector` |
+| Seeking Air Mine | MegaAirTrap | `megaairtrap` |
 
-| Step | Result |
-|---|---|
-| Container header | `SC` + LE u32 version 6, hash length 20 at offset 16 |
-| Metadata region | FlatBuffers, buffer base at offset **12** |
-| Export table | field 10: 3143 entries, each a name and a constant type tag; the export id is the **vector index**, there is no id field |
-| Object graph | a ZSTD frame after the metadata, 4.0 MB compressed to 29.7 MB |
-| Graph root | FlatBuffers, buffer base at offset **4** |
-| Object names | graph field 0: 3467 names |
-| Point pool | graph field 5: 1.93M `(x, y, t)` float triples, stride 3 |
-| Transform banks | graph field 6: five banks chunked at the u16 boundary, each a matrix vector (six floats `a b c d tx ty`) and a colour-transform vector (RGBA multiply/add) |
-| Texture list | near the graph tail: `u16` width, `u16` height, then the atlas filename — e.g. 608 x 1004 and `buildings_0.sctx`, matching that file's own SCTX header |
+Matching by name would have failed on every one of these. 65 of 73
+home-village buildings and 16 of the traps matched by TID; the misses are
+TH17/18 additions the third party has not published yet.
 
-The 18,827 shape records across the five banks are consistent with the number
-of sprites actually packed into the atlases: flood-filling opaque regions over
-all 71 textures yields 20,591 at a 16-pixel threshold and 17,548 at 64.
+The slug rule is: lowercase, split on non-alphanumerics, **do not split
+camelCase**. So `Alliance Castle` becomes `alliance-castle` but `AirTrap`
+becomes `airtrap`, not `air-trap`. Getting this wrong silently 404s a whole
+category — it is what initially lost every trap portrait.
 
-**Not solved: shape record → atlas rectangle.** Without it, no name resolves to
-a picture.
+**Levels: data-driven.** The level shown is the max that town hall allows,
+read per level row from `TownHallLevel`, so a TH4 Cannon is a level-5 Cannon
+and is drawn as one. Coverage at the time of writing: 1255 structures at their
+exact level, 395 at the nearest published level, 50 with no portrait.
 
-**What was tried and rejected.**
+**Pixels: `ASSUMED`, and not from the game files.** The portraits are fetched
+from coc.guide rather than decoded from Supercell's own atlases, because the
+`.sc` shape-to-rectangle hop (below) is still unsolved. Confidence that they
+are the correct artwork is high — the site states it extracts from the game
+files, and spot checks match — but this is **second-hand**, unlike every
+balance figure in this project, and should be replaced once the SC decoder can
+produce the rectangles directly.
 
-- *Assigning sprites by footprint.* Produced a max-level X-Bow standing where a
-  level-2 Mortar belongs. Withdrawn — real art in the wrong place is worse than
-  a diagram, because it looks authoritative.
-- *Ordering.* The graph's object order is not alphabetical and not atlas order:
-  `basic_turret_lvl5`, `lvl4`, `lvl3` sit at indices 591, 593, 595, interleaved
-  with unrelated objects.
-- *Identifying sprites by eye.* Workable for a handful, but the atlases hold
-  seasonal skins and every level of every building, so most candidates cannot
-  be told apart with confidence. Guessing here would reintroduce exactly the
-  confidently-wrong failure this file exists to prevent.
+Where a level's portrait is unpublished, the nearest published level is drawn.
+The structure is still correct in identity, footprint, range and hitpoints,
+since those come from the extracted data; only the picture is approximate, and
+the renderer reports the counts. A structure with no portrait falls back to a
+plain footprint block rather than borrowing another building's, so nothing on
+screen is ever actively wrong about what it is.
 
-Until the rectangle hop is mapped, the renderer must not claim 1:1.
+### 6.7b `UNVERIFIED` — SC shape record to atlas rectangle
+
+Still unsolved, and the reason 6.7 relies on a third party for pixels. See
+`crates/coc-assets/src/sc.rs` for how far the container is mapped: the export
+table, the object graph, the point pool, the transform banks and the texture
+list all decode. What does not is the hop from a shape record to its rectangle
+in the atlas.
+
+Three approaches were tried and rejected: assigning by footprint (drew a
+max-level X-Bow where a level-2 Mortar belonged), object ordering (not
+alphabetical, not atlas order), and identifying sprites by eye across all 4,920
+extracted sprites (the atlases carry every seasonal skin and every level, so
+most cannot be told apart with confidence).
 
 ### 6.8 `DATA` — `.sc` is version 6, little-endian
 

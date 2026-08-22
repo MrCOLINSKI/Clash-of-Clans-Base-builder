@@ -1,0 +1,98 @@
+{
+ "Bomb": {
+  "key": "Mine",
+  "kebab": "mine",
+  "cat": "trap",
+  "levels": 14
+ },
+ "Spring Trap": {
+  "key": "Ejector",
+  "kebab": "ejector",
+  "cat": "trap",
+  "levels": 13
+ },
+ "Air Bomb": {
+  "key": "AirTrap",
+  "kebab": "airtrap",
+  "cat": "trap",
+  "levels": 13
+ },
+ "Giant Bomb": {
+  "key": "Superbomb",
+  "kebab": "superbomb",
+  "cat": "trap",
+  "levels": 12
+ },
+ "Seeking Air Mine": {
+  "key": "MegaAirTrap",
+  "kebab": "megaairtrap",
+  "cat": "trap",
+  "levels": 8
+ },
+ "Skeleton Trap": {
+  "key": "GhostTrap",
+  "kebab": "ghosttrap",
+  "cat": "trap",
+  "levels": 5
+ },
+ "Tornado Trap": {
+  "key": "TornadoTrap",
+  "kebab": "tornadotrap",
+  "cat": "trap",
+  "levels": 3
+ },
+ "Giga Bomb": {
+  "key": "GigaBomb",
+  "kebab": "gigabomb",
+  "cat": "trap",
+  "levels": 4
+ },
+ "Halloweenbomb": {
+  "key": "Halloweenbomb",
+  "kebab": "halloweenbomb",
+  "cat": "trap",
+  "levels": 1
+ },
+ "Slowbomb": {
+  "key": "Mine",
+  "kebab": "mine",
+  "cat": "trap",
+  "levels": 1
+ },
+ "SantaTrap": {
+  "key": "SantaTrap",
+  "kebab": "santatrap",
+  "cat": "trap",
+  "levels": 1
+ },
+ "FreezeBomb": {
+  "key": "FreezeBomb",
+  "kebab": "freezebomb",
+  "cat": "trap",
+  "levels": 1
+ },
+ "ShrinkTrap": {
+  "key": "ShrinkTrap",
+  "kebab": "shrinktrap",
+  "cat": "trap",
+  "levels": 1
+ },
+ "ShrinkTrap_SinglePlayer": {
+  "key": "ShrinkTrap_SinglePlayer",
+  "kebab": "shrinktrap-singleplayer",
+  "cat": "trap",
+  "levels": 1
+ },
+ "FreezeTrap_SinglePlayer": {
+  "key": "FreezeTrap_SinglePlayer",
+  "kebab": "freezetrap-singleplayer",
+  "cat": "trap",
+  "levels": 1
+ },
+ "Ghost Trap": {
+  "key": "GhostTrap",
+  "kebab": "ghosttrap",
+  "cat": "trap",
+  "levels": 1
+ }
+}
