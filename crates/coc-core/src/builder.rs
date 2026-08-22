@@ -416,7 +416,13 @@ fn widest_gap(v: &[i32]) -> Option<usize> {
 /// first and dropped if the base is too full to afford it — a structure placed
 /// touching its neighbour is still better than one that could not be placed.
 fn place_outside(occ: &[u8], box_: &Rect, w: i32, h: i32) -> Option<Rect> {
-    for spaced in [true, false] {
+    // Widest margin first. Packing the outer ring solid against the walls is
+    // what made the high town halls look cramped: at TH17 there are 35
+    // structures and 49 traps outside the lattice, and first-fit filled the
+    // ring nearest the wall completely before moving outward, leaving a dense
+    // band against the wall and bare ground beyond it. The real game spreads
+    // them over the field.
+    for margin in [2, 1, 0] {
         // Work outward from the lattice edge, so the outer ring hugs the walls
         // rather than scattering against the map border.
         for pad in 0..BUILDABLE {
@@ -424,7 +430,7 @@ fn place_outside(occ: &[u8], box_: &Rect, w: i32, h: i32) -> Option<Rect> {
                 if !r.inside_buildable() || !crate::legality::can_place(&r, occ) {
                     continue;
                 }
-                if spaced && !clear_margin(occ, &r) {
+                if margin > 0 && !clear_margin(occ, &r, margin) {
                     continue;
                 }
                 return Some(r);
@@ -450,13 +456,13 @@ fn ring_positions(box_: &Rect, pad: i32, w: i32, h: i32) -> Vec<Rect> {
     out
 }
 
-/// Whether a rectangle has a clear one-tile border on every side.
+/// Whether a rectangle has a clear border of `m` tiles on every side.
 ///
 /// Tiles off the playfield count as clear, so a structure against the map edge
 /// is not penalised for the edge itself.
-fn clear_margin(occ: &[u8], r: &Rect) -> bool {
-    for y in r.y - 1..=r.bottom() {
-        for x in r.x - 1..=r.right() {
+fn clear_margin(occ: &[u8], r: &Rect, m: i32) -> bool {
+    for y in r.y - m..r.bottom() + m {
+        for x in r.x - m..r.right() + m {
             match idx(x, y) {
                 Some(c) if occ[c] != 0 => return false,
                 _ => {}

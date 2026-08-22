@@ -598,6 +598,43 @@ its bottom edge with a band of dead space above it. The stage now also matches
 the world's own aspect ratio instead of a fixed 0.78, and a test asserts all
 four playfield corners land inside the canvas at fit zoom, at all 18 town halls.
 
+### 6.14 `DATA` — Portrait art exists only where the appearance changes
+
+The art host publishes a portrait for a building **only at levels where it
+visibly changes**. An Air Bomb has art at 1, 3, 5, 7, 9 and 11 and nothing
+between; an X-Bow at 3, 4, 5, 6, 8, 9, 10, 11. Every gap 404s, and the host was
+verified live against a known-good control before concluding that.
+
+So a "near" match is normal, not a defect — but only *downwards*. The right
+picture for a level-10 Air Bomb is the level-9 art, because that is what the
+trap looks like until it reaches 11.
+
+The matcher was picking the nearest published level by absolute distance, which
+rounds **up** as readily as down: 266 placements were drawn one tier more
+advanced than the building actually was — a level-4 Seeking Air Mine wearing its
+level-5 skin. Now it floors to the highest published tier at or below the
+level. TH17 went from 82 correct portraits of 157 to 152; TH18 from 29 of 163
+to 154.
+
+Wall colours follow the same rule: TH18 allows wall level 19, which has no
+shipped art to sample, so it takes the top published tier rather than falling
+through to generic stone.
+
+### 3.6 `ASSUMED` — Portrait scale is fitted to how full the base is
+
+A TH3 base covers 7% of the field; a TH18 base covers 81%. The portraits stand
+about five tile-heights tall, so at one fixed scale either the low town halls
+look shrunken or the high ones bury their own walls — which is what "the higher
+town halls still look cramped" was.
+
+The renderer now sets the scale from occupancy — footprints plus walls over the
+buildable area — running from 0.82 at an eighth full to 0.60 at four-fifths
+full. Moving the slider pins it and stops the automatic fit.
+
+This is presentation, not simulation: it changes how the base is drawn, never
+where anything sits. Placement, legality and every metric read the same tile
+coordinates regardless.
+
 ---
 
 ## 4. Open questions
