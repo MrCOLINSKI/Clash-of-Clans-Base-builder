@@ -65,50 +65,13 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
     let wall_budget = thl.count_of("Wall").max(0) as usize;
     let _ = &thl;
     layout.wall_level = level_for(data, "Wall", th).unwrap_or(0);
-    let mut walls = Vec::new();
-    // Rings are generated from the outside in until the budget is spent,
-    // rather than picked from a fixed table. A fixed table left a TH7 base
-    // using 148 of its 175 walls and a TH12 base 248 of 300, which reads as
-    // one open compartment instead of the layered shell a real base has.
-    let rings: Vec<(i32, i32)> = {
-        let mut out = Vec::new();
-        let mut spent = 0usize;
-        let mut a = 5;
-        let mut b = ORIGIN + BUILDABLE - 5;
-        while spent < wall_budget && b - a >= 8 {
-            // Perimeter of the ring, less the gaps punched into it.
-            let per = ((b - a) * 4) as usize;
-            out.push((a, b));
-            spent += per - per / 13;
-            a += 4;
-            b -= 4;
-        }
-        out
-    };
-
-    'outer: for &(a, b) in &rings {
-        for x in a..=b {
-            for y in [a, b] {
-                if walls.len() >= wall_budget {
-                    break 'outer;
-                }
-                // Leave gaps so compartments have doors, as real bases do.
-                if x % 13 != 0 {
-                    walls.push((x, y));
-                }
-            }
-        }
-        for y in a + 1..b {
-            for x in [a, b] {
-                if walls.len() >= wall_budget {
-                    break 'outer;
-                }
-                if y % 13 != 0 {
-                    walls.push((x, y));
-                }
-            }
-        }
-    }
+    // A real base is a lattice of closed compartments, not concentric rings.
+    // Rings with gaps punched in them leave one big open interior, which both
+    // looks wrong and scores badly on enclosure, because a troop can walk in.
+    //
+    // The lattice is sized to spend the wall budget: pick the cell size and
+    // line count whose wall tile count comes closest without exceeding it.
+    let (walls, cells) = wall_lattice(wall_budget);
     for &(x, y) in &walls {
         if let Some(c) = idx(x, y) {
             occ[c] = 2;
@@ -144,8 +107,9 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
             continue;
         }
         for _ in 0..*count {
-            let target = ring_for(name);
-            if let Some(rect) = find_spot(&occ, w, h, target, &mut rng) {
+            let rect = place_in_cells(&occ, &cells, w, h, priority(name))
+                .or_else(|| find_spot(&occ, w, h, ring_for(name), &mut rng));
+            if let Some(rect) = rect {
                 for (x, y) in rect.tiles() {
                     if let Some(c) = idx(x, y) {
                         occ[c] = 1;
@@ -164,6 +128,114 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         }
     }
     layout
+}
+
+/// Finds room inside the wall compartments, working outward from the centre.
+///
+/// `rank` biases where a structure lands: the town hall and heavy defences
+/// take the core cells, everything else fills outward. Falling back to the
+/// open ground outside the lattice is the caller's job.
+fn place_in_cells(occ: &[u8], cells: &[Rect], w: i32, h: i32, rank: u8) -> Option<Rect> {
+    // Low-rank structures start at the centre; high-rank ones skip past the
+    // core so they do not squat in the compartments the defences need.
+    let skip = match rank {
+        0 => 0,
+        1 => 0,
+        2 => 1,
+        3 => 2,
+        _ => cells.len() / 3,
+    };
+    for cell in cells.iter().skip(skip.min(cells.len())) {
+        for y in cell.y..cell.bottom().saturating_sub(h - 1) {
+            for x in cell.x..cell.right().saturating_sub(w - 1) {
+                let r = Rect::new(x, y, w, h);
+                if crate::legality::can_place(&r, occ) {
+                    return Some(r);
+                }
+            }
+        }
+    }
+    None
+}
+
+/// Builds a lattice of closed wall compartments, returning the wall tiles and
+/// the interior rectangle of each cell.
+///
+/// Cell size and extent are chosen so the wall count lands as close under the
+/// budget as possible: a fixed lattice either overspends and gets truncated
+/// mid-line, leaving a gap that breaks every compartment, or underspends and
+/// leaves the base open.
+fn wall_lattice(budget: usize) -> (Vec<(i32, i32)>, Vec<Rect>) {
+    if budget < 24 {
+        return (Vec::new(), vec![Rect::new(ORIGIN, ORIGIN, BUILDABLE, BUILDABLE)]);
+    }
+    // Search for the lattice that yields the most *usable interior*, not the
+    // one that burns the most wall. Maximising wall tiles picks many tiny
+    // compartments: the budget is spent but almost nothing fits inside, and
+    // the buildings end up outside the walls.
+    //
+    // Cells are at least 6 wide so a 4x4 still fits in one.
+    let mut best: Option<(i32, i32, i32)> = None;
+    for cell in 6..=9i32 {
+        for lines in 2..=7i32 {
+            let span = (lines - 1) * cell;
+            if span + 1 > BUILDABLE - 2 {
+                continue;
+            }
+            let tiles = (2 * lines * (span + 1) - lines * lines) as usize;
+            if tiles > budget {
+                continue;
+            }
+            let interior = (lines - 1) * (lines - 1) * (cell - 1) * (cell - 1);
+            if best.is_none_or(|(_, _, area)| interior > area) {
+                best = Some((cell, lines, interior));
+            }
+        }
+    }
+    let Some((cell, lines, _)) = best else {
+        return (Vec::new(), vec![Rect::new(ORIGIN, ORIGIN, BUILDABLE, BUILDABLE)]);
+    };
+
+    let span = (lines - 1) * cell;
+    let x0 = ORIGIN + (BUILDABLE - span) / 2;
+    let y0 = x0;
+    let mut walls = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    for i in 0..lines {
+        let cx = x0 + i * cell;
+        let cy = y0 + i * cell;
+        for t in 0..=span {
+            for p in [(cx, y0 + t), (x0 + t, cy)] {
+                if seen.insert(p) {
+                    walls.push(p);
+                }
+            }
+        }
+    }
+
+    // Interiors are the open squares between the lines.
+    let mut cells = Vec::new();
+    for r in 0..lines - 1 {
+        for c in 0..lines - 1 {
+            cells.push(Rect::new(
+                x0 + c * cell + 1,
+                y0 + r * cell + 1,
+                cell - 1,
+                cell - 1,
+            ));
+        }
+    }
+    // Centre-first, so the town hall and the heavy defences claim the core.
+    let mid = (lines - 1) as f64 / 2.0 - 0.5;
+    cells.sort_by(|a, b| {
+        let d = |r: &Rect| {
+            let cx = (r.x - x0) as f64 / cell as f64;
+            let cy = (r.y - y0) as f64 / cell as f64;
+            ((cx - mid).powi(2) + (cy - mid).powi(2)).sqrt()
+        };
+        d(a).partial_cmp(&d(b)).unwrap_or(std::cmp::Ordering::Equal)
+    });
+    (walls, cells)
 }
 
 fn dims(data: &GameData, name: &str) -> (i32, i32, String, i32, i32, bool) {
@@ -250,6 +322,23 @@ mod tests {
         assert_eq!(a, b, "same seed must produce the same layout");
         let c = seed(&d, 12, 43);
         assert_ne!(a, c, "a different seed should differ");
+    }
+
+    #[test]
+    fn wall_compartments_actually_enclose() {
+        let Ok(d) = GameData::load_default() else { return };
+        // A lattice of closed cells should hold most of the base inside it.
+        // Concentric rings with gaps scored around 0.3 here, because a troop
+        // could walk straight in through a gap.
+        for th in [10, 14, 17] {
+            let l = seed(&d, th, 42);
+            let m = crate::metrics::evaluate(&l, &crate::Weights::war());
+            assert!(
+                m.enclosed > 0.5,
+                "TH{th} encloses only {:.2} of its structures",
+                m.enclosed
+            );
+        }
     }
 
     #[test]
