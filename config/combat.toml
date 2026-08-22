@@ -1,0 +1,103 @@
+# Combat and battle timing.
+#
+# Same rule as pathing.toml: `from_data` means "whatever globals.csv says", and
+# is always the right answer when the data has the value. What makes this file
+# different — and worse — is that three of the numbers combat needs are **not
+# in the shipped data at all**. All 500 keys in globals.csv were searched.
+#
+# Those three are marked UNVERIFIED below. They are written here, once, rather
+# than in Rust source, so that the phase 5 calibration harness can fit them
+# against real attack replays and so that a wrong value is visible rather than
+# buried. Until that fitting runs, every time-dependent result this simulator
+# produces is provisional. See ASSUMPTIONS.md 5.
+#
+# Extracted values shown in comments are from game version 18.400.11.
+
+[tick]
+# Fixed timestep, in milliseconds.
+#
+# CHOSEN, not extracted: the client's own tick rate is not in the data. A fixed
+# step is a hard requirement for determinism regardless of the value — a
+# variable step makes two runs of the same battle diverge — so the choice here
+# affects resolution, not reproducibility.
+#
+# 1000/64 is not integral, so 15.625 ms is expressed as 15625 microseconds to
+# keep the whole clock in integers.
+step_us = 15625
+
+# Positions are tracked in thousandths of a game distance unit so that a slow
+# unit still advances every tick. Integer throughout: floating-point positions
+# would make results depend on the host's rounding.
+position_scale = 1000
+
+[speed]
+# UNVERIFIED — the single most consequential unknown in this file.
+#
+# `characters.csv` gives Speed as a bare integer (Giant 150, Barbarian 220,
+# Goblin 400). Nothing in the shipped data states what that integer is *per*.
+# There is no conversion constant, no tick rate, and no documented reference
+# time anywhere in globals.csv.
+#
+# The reading used here is the one that invents no number: Speed is game
+# distance units per second, in the same units as every range in the data
+# (100 units = 1 tile, see ASSUMPTIONS.md 1.9). On that reading a Giant crosses
+# 1.5 tiles per second and a Goblin 4.0.
+#
+# This may well be wrong by a constant factor. If it is, every unit in the game
+# is wrong by the same factor, which is exactly the shape of error a
+# calibration fit against one observed replay can correct. That is why this is
+# a single multiplier rather than a per-unit table.
+units_per_second_per_speed_point = 1
+# Denominator, so a fitted factor need not be an integer.
+units_per_second_divisor = 1
+
+[battle]
+# UNVERIFIED — battle length is not in the shipped data.
+#
+# The community figure for a home-village attack is 30 seconds of scouting plus
+# 3 minutes of battle. Neither number appears in globals.csv. Scouting time is
+# irrelevant to a simulator that deploys on tick zero, so only the battle
+# length is modelled.
+duration_seconds = 180
+
+# UNVERIFIED — star thresholds are not in the shipped data either.
+#
+# One star at 50% destruction, one for the Town Hall, one at 100%. The 50%
+# figure is *suggestive* rather than confirmed: globals.csv carries
+# HIDDEN_BUILDING_APPEAR_DESTRUCTION_PERCENTAGE = 50, which is a different
+# mechanic that happens to share the number.
+star_destruction_percent = 50
+star_for_town_hall = true
+star_total_destruction_percent = 100
+
+# Whether destruction percentage counts walls.
+#
+# ASSUMED false: the in-game percentage is buildings destroyed over buildings
+# total, and a base with 300 walls would otherwise be nearly impossible to
+# three-star. Not confirmed against a replay.
+destruction_counts_walls = false
+
+[defense]
+# Hidden defences (Hidden Tesla) surface at this destruction percentage.
+# EXTRACTED — this one is real data.
+hidden_building_appear_percent = "from_data"  # globals.csv = 50
+
+# Delay between a defence losing its target and acquiring the next one.
+# Shared with pathing.toml, and unverified in both. See ASSUMPTIONS.md 2.6.
+retarget_delay_ms = 0
+
+# Whether a defence forced to retarget prefers to keep its current building.
+# EXTRACTED.
+stick_to_targeted_building = "from_data"  # STICK_TO_TARGETED_BUILDING_WHEN_FORCING_RETARGET = TRUE
+
+[damage]
+# Damage is applied on the attack's tick, not spread across the cooldown.
+#
+# ASSUMED. `characters.csv` gives DPS and AttackSpeed in milliseconds; the
+# product is damage per swing. Whether the client applies it at the start or
+# the end of the swing animation is not in the data, and the difference matters
+# only for units that die mid-swing.
+apply_on = "swing_start"
+
+# Whether a unit that dies mid-cooldown still lands its pending hit.
+pending_hit_lands_on_death = false

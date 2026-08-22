@@ -47,6 +47,23 @@ impl Globals {
         self.texts.get(key).map(|s| s.as_str())
     }
 
+    /// Every key parsed, sorted.
+    ///
+    /// Sorted rather than in hash order because this feeds reports and
+    /// exploratory dumps, and an unstable order there turns "what changed
+    /// between two game versions" into a diff of noise.
+    pub fn keys(&self) -> Vec<&str> {
+        let mut out: Vec<&str> = self
+            .numbers
+            .keys()
+            .chain(self.booleans.keys())
+            .chain(self.texts.keys())
+            .map(String::as_str)
+            .collect();
+        out.sort_unstable();
+        out
+    }
+
     /// Number of keys parsed, for the provenance banner.
     pub fn len(&self) -> usize {
         self.numbers.len() + self.booleans.len() + self.texts.len()

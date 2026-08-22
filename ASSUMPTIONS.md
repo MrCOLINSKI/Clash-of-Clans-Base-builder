@@ -395,6 +395,61 @@ Every layout-extent-dependent result is provisional until (3) runs.
 
 ---
 
+## 2b. Combat timing — three numbers the game does not ship
+
+Found while starting phase 4, and worth its own section because these bound
+every combat result the project will ever produce. All 500 keys in
+`globals.csv` were searched for each.
+
+### 2b.1 `UNVERIFIED` — What a Speed value is *per*
+
+Confidence: low. **The most consequential unknown in the project.**
+
+`characters.csv` gives `Speed` as a bare integer — Giant 150, Barbarian 220,
+Archer 300, Goblin 400 — with no unit and no conversion constant anywhere in
+the shipped data. There is no tick rate, no reference duration, and nothing
+relating `Speed` to the distance units every range in the game is expressed in.
+
+The reading adopted is the one that invents no number: `Speed` is game distance
+units per second, the same units as `AttackRange` (100 = 1 tile, §1.9). A Giant
+then crosses 1.5 tiles per second and a Goblin 4.0.
+
+This may be wrong by a constant factor. If it is, *every unit is wrong by the
+same factor* — which is precisely the error shape a calibration fit against one
+observed replay corrects. It is therefore expressed in `config/combat.toml` as
+a single global multiplier (`units_per_second_per_speed_point` over
+`units_per_second_divisor`) rather than as a per-unit table, so the fit has one
+parameter to find rather than 193.
+
+Nothing here is guessed from memory of the game. The alternative would have
+been to write down a remembered tiles-per-minute figure, which RULE 1 forbids
+and which would have been unfalsifiable once written.
+
+### 2b.2 `UNVERIFIED` — Battle length
+
+The community figure is 30 seconds of scouting plus 3 minutes of battle.
+Neither is in the data. Scouting is irrelevant to a simulator that deploys on
+tick zero, so only the 180 seconds is modelled, and it lives in
+`config/combat.toml`.
+
+### 2b.3 `UNVERIFIED` — Star thresholds
+
+50% destruction, the Town Hall, and 100% destruction. None of the three is in
+the data.
+
+One near-miss worth recording so nobody else mistakes it for a source:
+`HIDDEN_BUILDING_APPEAR_DESTRUCTION_PERCENTAGE = 50` **is** shipped, but it
+governs when a Hidden Tesla surfaces, not when a star is awarded. It shares the
+number 50 with the star threshold coincidentally, and reading it as
+confirmation would be exactly the kind of plausible-looking error this document
+exists to prevent.
+
+Also `ASSUMED`: destruction percentage does not count walls. A base with 300
+walls would otherwise be near-impossible to three-star, which is not how the
+game plays — but this is reasoning from behaviour, not from data.
+
+---
+
 ## 4. Open questions
 
 Unresolved. Listed so they are not quietly forgotten.
