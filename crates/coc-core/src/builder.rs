@@ -161,6 +161,17 @@ pub fn seed_with(data: &GameData, th: u32, seed: u64, plan: Plan) -> Layout {
         }
         let inside = goes_inside(name, &class);
         for _ in 0..*count {
+            // Ground-targeting defences already on the map, as (x, y, range)
+            // in tiles. Rebuilt each time because the list grows as we go.
+            let guards: Vec<(f64, f64, f64)> = layout
+                .placements
+                .iter()
+                .filter(|p| p.is_defense() && p.ground_targets)
+                .map(|p| {
+                    let (cx, cy) = p.rect.centre2();
+                    (cx as f64 / 2.0, cy as f64 / 2.0, p.range as f64 / 100.0)
+                })
+                .collect();
             let rect = if is_trap {
                 // Traps go in the leftovers, wherever those are — they are what
                 // the gaps between compartments are for.
@@ -171,7 +182,7 @@ pub fn seed_with(data: &GameData, th: u32, seed: u64, plan: Plan) -> Layout {
                     place_in_cells(&occ, &cells, &mut held, &Spot {
                         name, total: *count, w, h, rank: priority(name), placed: &seen,
                     })
-                        .or_else(|| place_outside(&occ, &box_, w, h))
+                        .or_else(|| place_outside(&occ, &box_, w, h, &guards))
                 }
             } else {
                 // Collectors, camps and huts live outside the walls, as they do
@@ -179,7 +190,7 @@ pub fn seed_with(data: &GameData, th: u32, seed: u64, plan: Plan) -> Layout {
                 // first is what pushed the defences out.
                 {
                     let seen = placed.get(name).cloned().unwrap_or_default();
-                    place_outside(&occ, &box_, w, h)
+                    place_outside(&occ, &box_, w, h, &guards)
                         .or_else(|| place_in_cells(&occ, &cells, &mut held, &Spot {
                             name, total: *count, w, h, rank: 4, placed: &seen,
                         }))
@@ -655,14 +666,30 @@ fn ring_lattice(budget: usize, needed: i32) -> Option<Grid> {
 /// The gap is what stops the outer ring reading as one solid brick. It is tried
 /// first and dropped if the base is too full to afford it — a structure placed
 /// touching its neighbour is still better than one that could not be placed.
-fn place_outside(occ: &[u8], box_: &Rect, w: i32, h: i32) -> Option<Rect> {
+fn place_outside(
+    occ: &[u8],
+    box_: &Rect,
+    w: i32,
+    h: i32,
+    guards: &[(f64, f64, f64)],
+) -> Option<Rect> {
     // Widest margin first. Packing the outer ring solid against the walls is
     // what made the high town halls look cramped: at TH17 there are 35
     // structures and 49 traps outside the lattice, and first-fit filled the
     // ring nearest the wall completely before moving outward, leaving a dense
     // band against the wall and bare ground beyond it. The real game spreads
     // them over the field.
-    for margin in [2, 1, 0] {
+    // Covered positions first, and only then the wider margins.
+    //
+    // Pushing the outer ring away from the walls for visual clarity is what
+    // produced 455 archer-anchor tiles at TH7: a building parked past the edge
+    // of every defence's range is free damage, and the analyser rule that
+    // names it is the oldest one in the set. A structure nobody can defend is
+    // worse placed than a structure with no air around it.
+    // Tightest covered position first. Coverage beats spacing: a building the
+    // defences reach is worth more than a building with air around it, and at
+    // the town halls where defences are scarce the two genuinely conflict.
+    for (margin, must_cover) in [(0, true), (1, true), (0, false), (1, false), (2, false)] {
         // Work outward from the lattice edge, so the outer ring hugs the walls
         // rather than scattering against the map border.
         for pad in 0..BUILDABLE {
@@ -671,6 +698,9 @@ fn place_outside(occ: &[u8], box_: &Rect, w: i32, h: i32) -> Option<Rect> {
                     continue;
                 }
                 if margin > 0 && !clear_margin(occ, &r, margin) {
+                    continue;
+                }
+                if must_cover && !covered(&r, guards) {
                     continue;
                 }
                 return Some(r);
@@ -694,6 +724,25 @@ fn ring_positions(box_: &Rect, pad: i32, w: i32, h: i32) -> Vec<Rect> {
         out.push(Rect::new(k, b, w, h));
     }
     out
+}
+
+/// Whether every corner of a footprint sits inside some defence's range.
+///
+/// Corners rather than the centre: an Archer stands off the *edge* of a
+/// building, so a footprint whose middle is covered can still be sniped from
+/// a corner that is not.
+fn covered(r: &Rect, guards: &[(f64, f64, f64)]) -> bool {
+    let pts = [
+        (r.x as f64, r.y as f64),
+        (r.right() as f64, r.y as f64),
+        (r.x as f64, r.bottom() as f64),
+        (r.right() as f64, r.bottom() as f64),
+    ];
+    pts.iter().all(|&(px, py)| {
+        guards
+            .iter()
+            .any(|&(gx, gy, gr)| ((px - gx).powi(2) + (py - gy).powi(2)).sqrt() <= gr)
+    })
 }
 
 /// Whether a rectangle has a clear border of `m` tiles on every side.
@@ -1122,6 +1171,52 @@ mod plan_tests {
             let grid = seed_with(&d, th, 0xC0FFEE, Plan::Lattice);
             let ring = seed_with(&d, th, 0xC0FFEE, Plan::Ring);
             assert_eq!(grid.walls, ring.walls, "TH{th} should fall back to the grid");
+        }
+    }
+}
+
+#[cfg(test)]
+mod analyser_rules {
+    use super::*;
+
+    /// Corners of every non-trap structure that no ground defence reaches.
+    ///
+    /// An Archer stands off a building's edge, so an uncovered corner is a
+    /// building an attacker can chip for free — the oldest rule in
+    /// `coc-base-analyser`'s set, and the one this builder used to break most.
+    fn uncovered_corners(l: &Layout) -> usize {
+        let guards: Vec<(f64, f64, f64)> = l
+            .placements
+            .iter()
+            .filter(|p| p.is_defense() && p.ground_targets)
+            .map(|p| {
+                let (cx, cy) = p.rect.centre2();
+                (cx as f64 / 2.0, cy as f64 / 2.0, p.range as f64 / 100.0)
+            })
+            .collect();
+        l.placements
+            .iter()
+            .filter(|p| !p.is_trap)
+            .filter(|p| !covered(&p.rect, &guards))
+            .count()
+    }
+
+    #[test]
+    fn structures_sit_where_a_defence_can_reach_them() {
+        // From TH11 up there are enough defences to cover the whole base, and
+        // any structure outside that cover is one an Archer takes for nothing.
+        // Below TH11 the coverage does not exist to be had, which is a property
+        // of the game rather than of this builder.
+        let Ok(d) = GameData::load_default() else { return };
+        for th in 11..=d.max_townhall() {
+            for plan in [Plan::Lattice, Plan::Ring] {
+                let l = seed_with(&d, th, 0xC0FFEE, plan);
+                let bad = uncovered_corners(&l);
+                assert_eq!(
+                    bad, 0,
+                    "TH{th} {plan:?}: {bad} structures sit outside every ground defence"
+                );
+            }
         }
     }
 }

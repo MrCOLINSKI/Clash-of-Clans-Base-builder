@@ -821,6 +821,48 @@ Walls now take `artScale` like everything else, with a 1.12 factor because wall
 art carries less padding than a building portrait does and needs slightly more
 of its tile to sit at the same visual size.
 
+### 3.12 `DATA` — Judged by a real analyser's rules, not invented geometry
+
+The proxies this project scored layouts on — coverage, enclosure, balance — are
+its own inventions. `danielholmes/coc-base-analyser` encodes ten rules that
+experienced players actually check, and four of them are pure geometry, so they
+can be applied here directly. Its troop constants agree with the extracted data
+(Archer 3.5 tiles against the shipped `AttackRange` of 350), which is a decent
+sign the rest is sound.
+
+`cargo run -p coc-core --bin defense_audit` runs them over every town hall and
+both wall plans:
+
+| Rule | What it checks |
+|---|---|
+| Air-sniped defence | Every Minion position against a *ground-only* defence is inside some air-targeting defence's range |
+| High-HP under air defence | Same for every Dragon position against a Town Hall, storage or Clan Castle |
+| Minimum compartments | At least eight wall compartments containing buildings |
+| Archer anchor | No free tile in reach of a building but out of reach of every ground defence |
+
+**Result: TH11 to TH18 pass all four on both plans — sixteen layouts clean.
+TH7 to TH10 fail, and TH1 to TH6 fail heavily.**
+
+The dominant failure was archer anchors, and the cause was this project's own
+doing. `place_outside` pushed the outer ring away from the walls to stop it
+reading as a solid brick — which parks buildings past the edge of every
+defence's range, where an Archer takes them for free. 455 anchor tiles at TH7.
+Outside placement now prefers the tightest position a ground defence actually
+covers, and only widens the margin when no covered spot remains: TH7 is down to
+174, TH8 from 169 to 107.
+
+What is left is not tuning. At TH7 there are 20 defences to cover 1600 tiles;
+at TH10, 38. The coverage to satisfy the rule does not exist at those levels
+unless the whole base is drawn into a much tighter footprint, which is a
+different builder — it would size the *base*, not just the lattice, to the
+defensive reach available. Recorded rather than bodged.
+
+Below TH7 the rules are simply not satisfiable: three defences cannot cover a
+village, and eight compartments cannot be walled with 24 wall tiles.
+
+A test pins the part that is fixed: from TH11 up, no structure sits outside
+every ground defence, on either plan.
+
 ---
 
 ## 4. Open questions
