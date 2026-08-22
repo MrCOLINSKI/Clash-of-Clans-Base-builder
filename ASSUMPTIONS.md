@@ -110,6 +110,19 @@ and 32 buildings respectively). The Builder Base is a separate mode with its
 own hall progression, so its entries are excluded from home-village town hall
 checks. This project simulates the home village only.
 
+**This filter is easy to forget and fails loudly only if you count.**
+`townhall_levels.csv` carries counts for *both* villages in one table, so a
+layout builder reading it unfiltered places both. At TH17 that meant 255 extra
+Builder Base structures — including 180 BB Walls, a Battle Machine Altar and a
+Clock Tower — giving 359 structures where the home village allows 156. The base
+still validated, because every one of those structures genuinely has a non-zero
+count in the table.
+
+`GameData::is_home_village` and `GameData::home_counts` exist so callers filter
+in one place, and `coc-core` has a regression test asserting no Builder Base
+structure ever appears in a home village layout and that TH17 lands in the
+100-200 range.
+
 ### 1.8 `DATA` — `heroes.csv` is not a superset of `characters.csv`
 
 The two tables share a parser but not a schema: `heroes.csv` lacks

@@ -63,9 +63,15 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
     // Walls first: they define the compartments everything else fits around,
     // and they must be reserved before structures claim the tiles.
     let wall_budget = thl.count_of("Wall").max(0) as usize;
+    let _ = &thl;
     layout.wall_level = level_for(data, "Wall", th).unwrap_or(0);
     let mut walls = Vec::new();
-    let rings: &[(i32, i32)] = if wall_budget > 250 {
+    // Ring counts are chosen to spend most of the wall budget: a TH17 base
+    // with only three rings leaves 70+ walls unused and reads as one open
+    // compartment rather than the layered one a real base has.
+    let rings: &[(i32, i32)] = if wall_budget > 300 {
+        &[(17, 26), (13, 30), (9, 34), (5, 38)]
+    } else if wall_budget > 220 {
         &[(15, 28), (10, 33), (6, 37)]
     } else if wall_budget > 150 {
         &[(14, 29), (9, 34)]
@@ -107,15 +113,19 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
     layout.walls = walls;
 
     // Structures, most important first so the centre goes to what matters.
-    let mut names: Vec<(&String, i64)> = thl
-        .building_counts
-        .iter()
-        .filter(|(n, c)| **c > 0 && n.as_str() != "Wall")
-        .map(|(n, c)| (n, *c))
+    // Home village only. townhall_levels.csv covers both villages, so without
+    // this a TH17 base picks up 255 Builder Base structures including 180 BB
+    // Walls, which is what produced 359 structures instead of 156.
+    let mut names: Vec<(String, i64)> = data
+        .home_counts(th)
+        .into_iter()
+        .filter(|(n, _)| *n != "Wall")
+        .map(|(n, c)| (n.to_string(), c))
         .collect();
-    names.sort_by_key(|(n, _)| (priority(n), (*n).clone()));
+    names.sort_by_key(|(n, _)| (priority(n), n.clone()));
 
-    for (name, count) in names {
+    for (name, count) in &names {
+        let name = name.as_str();
         let Some(level) = level_for(data, name, th) else {
             continue;
         };
@@ -123,7 +133,7 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         if w == 0 {
             continue;
         }
-        for _ in 0..count {
+        for _ in 0..*count {
             let target = ring_for(name);
             if let Some(rect) = find_spot(&occ, w, h, target, &mut rng) {
                 for (x, y) in rect.tiles() {
@@ -132,7 +142,7 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
                     }
                 }
                 layout.placements.push(Placement {
-                    name: name.clone(),
+                    name: name.to_string(),
                     level,
                     rect,
                     class: class.clone(),
@@ -230,6 +240,25 @@ mod tests {
         assert_eq!(a, b, "same seed must produce the same layout");
         let c = seed(&d, 12, 43);
         assert_ne!(a, c, "a different seed should differ");
+    }
+
+    #[test]
+    fn builder_base_structures_never_enter_a_home_village() {
+        let Ok(d) = GameData::load_default() else { return };
+        let l = seed(&d, 17, 7);
+        let bb: Vec<&str> = l
+            .placements
+            .iter()
+            .map(|p| p.name.as_str())
+            .filter(|n| !d.is_home_village(n))
+            .collect();
+        assert!(bb.is_empty(), "builder base structures placed: {bb:?}");
+        // TH17 home village is around 150 structures; 359 meant both villages.
+        assert!(
+            (100..=200).contains(&l.placements.len()),
+            "TH17 should hold roughly 150 structures, got {}",
+            l.placements.len()
+        );
     }
 
     #[test]

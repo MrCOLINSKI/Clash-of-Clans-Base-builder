@@ -166,6 +166,36 @@ impl GameData {
         self.traps.iter().find(|b| b.name == name)
     }
 
+    /// Whether a named structure belongs to the home village.
+    ///
+    /// `townhall_levels.csv` covers both villages in one table, so anything
+    /// reading its counts must filter — otherwise a home village base picks up
+    /// 180 BB Walls and a Battle Machine Altar.
+    pub fn is_home_village(&self, name: &str) -> bool {
+        if let Some(b) = self.building(name) {
+            return b.is_home_village();
+        }
+        if let Some(t) = self.trap(name) {
+            return t.is_home_village();
+        }
+        false
+    }
+
+    /// Permitted counts at a town hall, home village only.
+    pub fn home_counts(&self, level: u32) -> Vec<(&str, i64)> {
+        let Some(th) = self.townhall(level) else {
+            return Vec::new();
+        };
+        let mut v: Vec<(&str, i64)> = th
+            .building_counts
+            .iter()
+            .filter(|(n, c)| **c > 0 && self.is_home_village(n))
+            .map(|(n, c)| (n.as_str(), *c))
+            .collect();
+        v.sort_by_key(|(n, _)| *n);
+        v
+    }
+
     pub fn character(&self, name: &str) -> Option<&Character> {
         self.characters.iter().find(|c| c.name == name)
     }
