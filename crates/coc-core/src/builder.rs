@@ -117,6 +117,9 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
     // across rooms rather than stacked in one.
     let mut held: Vec<std::collections::HashMap<String, usize>> =
         vec![std::collections::HashMap::new(); cells.len()];
+    // Doubled centres of what has already gone down, per structure name.
+    let mut placed: std::collections::HashMap<String, Vec<(i32, i32)>> =
+        std::collections::HashMap::new();
     for &(x, y) in &walls {
         if let Some(c) = idx(x, y) {
             occ[c] = 2;
@@ -140,17 +143,31 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
                 // the gaps between compartments are for.
                 place_trap(&occ, &box_, w, h, &mut rng)
             } else if inside {
-                place_in_cells(&occ, &cells, &mut held, name, w, h, priority(name))
-                    .or_else(|| place_outside(&occ, &box_, w, h))
+                {
+                    let seen = placed.get(name).cloned().unwrap_or_default();
+                    place_in_cells(&occ, &cells, &mut held, &Spot {
+                        name, total: *count, w, h, rank: priority(name), placed: &seen,
+                    })
+                        .or_else(|| place_outside(&occ, &box_, w, h))
+                }
             } else {
                 // Collectors, camps and huts live outside the walls, as they do
                 // in every real base. Sending them through the compartments
                 // first is what pushed the defences out.
-                place_outside(&occ, &box_, w, h)
-                    .or_else(|| place_in_cells(&occ, &cells, &mut held, name, w, h, 4))
+                {
+                    let seen = placed.get(name).cloned().unwrap_or_default();
+                    place_outside(&occ, &box_, w, h)
+                        .or_else(|| place_in_cells(&occ, &cells, &mut held, &Spot {
+                            name, total: *count, w, h, rank: 4, placed: &seen,
+                        }))
+                }
             };
             let rect = rect.or_else(|| find_spot(&occ, w, h, ring_for(name), &mut rng));
             if let Some(rect) = rect {
+                placed
+                    .entry(name.to_string())
+                    .or_default()
+                    .push(rect.centre2());
                 for (x, y) in rect.tiles() {
                     if let Some(c) = idx(x, y) {
                         occ[c] = 1;
@@ -169,6 +186,25 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         }
     }
     layout
+}
+
+/// Whether this structure's copies must be kept apart.
+///
+/// The defences a single freeze, funnel or Ice Golem stall can neutralise
+/// together if they sit side by side. Splash and air cover are the cases that
+/// matter; a stack of Cannons is not a meaningful loss.
+fn spreads(name: &str) -> bool {
+    matches!(
+        name,
+        "Air Defense"
+            | "Scattershot"
+            | "Eagle Artillery"
+            | "Monolith"
+            | "Inferno Tower"
+            | "Multi Gear Tower"
+            | "Wizard Tower"
+            | "X-Bow"
+    )
 }
 
 /// Whether a structure belongs inside the walls.
@@ -205,15 +241,25 @@ fn goes_inside(name: &str, class: &str) -> bool {
 /// Scattershots side by side, and that is the single most punished mistake in
 /// current war base design: one freeze or one Ice Golem stall takes out the
 /// whole splash core at once. Spreading them forces an attacker to pick a side.
+pub(crate) struct Spot<'a> {
+    /// What this structure is, how many of it there are, and how big it is.
+    pub name: &'a str,
+    pub total: i64,
+    pub w: i32,
+    pub h: i32,
+    /// Placement priority; lower sits nearer the core.
+    pub rank: u8,
+    /// Doubled centres of the copies already placed.
+    pub placed: &'a [(i32, i32)],
+}
+
 fn place_in_cells(
     occ: &[u8],
     cells: &[Rect],
     held: &mut [std::collections::HashMap<String, usize>],
-    name: &str,
-    w: i32,
-    h: i32,
-    rank: u8,
+    s: &Spot<'_>,
 ) -> Option<Rect> {
+    let Spot { name, total, w, h, rank, placed } = *s;
     // Low-rank structures start at the centre; high-rank ones skip past the
     // core so they do not squat in the compartments the defences need.
     let skip = match rank {
@@ -225,9 +271,67 @@ fn place_in_cells(
     let usable = skip.min(cells.len().saturating_sub(1));
 
     // Order candidate compartments by how many of this structure they already
-    // hold, then by the centre-first order the lattice was built in.
-    let mut order: Vec<usize> = (usable..cells.len()).collect();
-    order.sort_by_key(|&i| (held[i].get(name).copied().unwrap_or(0), i));
+    // hold, then by how far the room sits from the nearest one already placed,
+    // then by the centre-first order the lattice was built in.
+    //
+    // Counting alone is not enough. Air Defenses landed in different rooms and
+    // still ended up four tiles apart, because adjacent compartments each held
+    // one — and a single funnel clears both. Maximising the gap is the rule
+    // that actually matters, so it is the rule that is optimised.
+    // A spread structure past its first copy is placed by maximising its
+    // distance from the copies already down — a farthest-point choice over real
+    // positions, not over compartments.
+    //
+    // Two cell-level heuristics were tried first and both failed, in opposite
+    // directions: "prefer the room farthest from the last one" is order
+    // dependent and fixed TH17 while breaking TH13; "spread the copies around
+    // the compass" produced tidy angles that meant nothing once a room was
+    // full. Both were proxies. This optimises the quantity actually being
+    // measured, so it cannot trade one town hall against another.
+    if spreads(name) && total > 1 && !placed.is_empty() {
+        let mut best: Option<(i64, usize, i32, i32)> = None;
+        for (i, cell) in cells.iter().enumerate().skip(usable) {
+            for y in cell.y..cell.bottom().saturating_sub(h - 1) {
+                for x in cell.x..cell.right().saturating_sub(w - 1) {
+                    let r = Rect::new(x, y, w, h);
+                    if !crate::legality::can_place(&r, occ) {
+                        continue;
+                    }
+                    let (cx, cy) = r.centre2();
+                    let gap = placed
+                        .iter()
+                        .map(|&(px, py)| {
+                            let (dx, dy) = ((cx - px) as i64, (cy - py) as i64);
+                            dx * dx + dy * dy
+                        })
+                        .min()
+                        .unwrap_or(i64::MAX);
+                    // Largest gap wins; ties resolve to the innermost room and
+                    // then to grid order, so the result is deterministic.
+                    let cand = (gap, std::cmp::Reverse(i), std::cmp::Reverse(y), std::cmp::Reverse(x));
+                    let better = match best {
+                        None => true,
+                        Some((g, bi, bx, by)) => {
+                            cand > (g, std::cmp::Reverse(bi), std::cmp::Reverse(by), std::cmp::Reverse(bx))
+                        }
+                    };
+                    if better {
+                        best = Some((gap, i, x, y));
+                    }
+                }
+            }
+        }
+        if let Some((_, i, x, y)) = best {
+            *held[i].entry(name.to_string()).or_default() += 1;
+            return Some(Rect::new(x, y, w, h));
+        }
+    }
+
+    let order: Vec<usize> = (usable..cells.len()).collect();
+    // Everything else keeps the centre-first order and packs tight. Spreading
+    // deliberately leaves gaps, and applying it to all 60 defences fragmented
+    // the compartments badly enough to push eight of them outside the walls at
+    // TH14. It is worth that cost only where a stack is actually punished.
 
     for i in order {
         let cell = &cells[i];
@@ -288,12 +392,12 @@ fn wall_lattice(budget: usize, needed: i32) -> (Vec<(i32, i32)>, Vec<Rect>, Rect
                 continue;
             }
             let cap = capacity(cell, lines);
-            // The same headroom the subdivision pass uses. The capacity model
-            // counts 3x3s; the handful of 4x4s — town hall, Eagle Artillery,
-            // Hero Hall — each waste most of a compartment's remainder. Sizing
-            // to an exact fit left TH5 with four 6x6 rooms for a core that
-            // needed every tile of them, and six defences outside the walls.
-            if cap >= needed + needed / 6 {
+            // Headroom over the raw core area. The capacity model counts 3x3s
+            // and the few 4x4s waste most of a compartment's remainder; on top
+            // of that, spreading same-type defences across rooms deliberately
+            // leaves awkward gaps rather than packing each room solid. Sizing
+            // to a tight fit put six defences back outside the walls at TH16.
+            if cap >= needed + needed / 4 {
                 // Among lattices that hold the core, take the **smallest cell**.
                 // Compartment size is the defensive variable: one Jump Spell
                 // into a 12-wide cell opens the base, where the same spell into
@@ -540,7 +644,13 @@ fn priority(name: &str) -> u8 {
     match name {
         "Town Hall" => 0,
         "Eagle Artillery" | "Hero Hall" | "Clan Castle" | "Scattershot" | "Monolith" => 1,
-        "Inferno Tower" | "X-Bow" | "Spell Tower" | "Multi Gear Tower" => 2,
+        // Air Defense and Wizard Tower sit here rather than in the general tier
+        // because both are spread structures, and a spread structure has to be
+        // placed while there is still room to spread into. Left until last they
+        // took whatever slots remained and ended up 10 tiles apart at TH17,
+        // close enough for one funnel to clear a pair.
+        "Inferno Tower" | "X-Bow" | "Spell Tower" | "Multi Gear Tower"
+        | "Air Defense" | "Wizard Tower" => 2,
         "Dark Elixir Storage" | "Gold Storage" | "Elixir Storage" => 3,
         _ => 4,
     }
@@ -677,6 +787,39 @@ mod tests {
             assert!(
                 stores.iter().all(|p| inside(p)),
                 "TH{th} leaves a storage outside the walls"
+            );
+        }
+    }
+
+    #[test]
+    fn spread_defences_are_kept_far_apart_at_every_town_hall() {
+        // Air Defenses landing near each other is the failure this guards: one
+        // funnel clears a pair. Two cell-level heuristics passed at some town
+        // halls and failed at others before the placement was changed to
+        // maximise the real separation, so the assertion covers all of them.
+        let Ok(d) = GameData::load_default() else { return };
+        for th in 1..=d.max_townhall() {
+            let l = seed(&d, th, 0xC0FFEE);
+            let ads: Vec<_> = l
+                .placements
+                .iter()
+                .filter(|p| p.name == "Air Defense")
+                .map(|p| p.rect.centre2())
+                .collect();
+            if ads.len() < 2 {
+                continue;
+            }
+            let mut gap = i32::MAX;
+            for i in 0..ads.len() {
+                for j in i + 1..ads.len() {
+                    let (dx, dy) = ((ads[i].0 - ads[j].0) / 2, (ads[i].1 - ads[j].1) / 2);
+                    gap = gap.min(dx * dx + dy * dy);
+                }
+            }
+            let tiles = (gap as f64).sqrt() as i32;
+            assert!(
+                tiles >= 12,
+                "TH{th}: closest pair of Air Defenses is {tiles} tiles apart"
             );
         }
     }

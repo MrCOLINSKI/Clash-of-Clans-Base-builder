@@ -691,6 +691,52 @@ halls, traps placed against pathing logic — is judgement about how attacks
 actually run, and this simulator is uncalibrated (§5). Encoding it now would be
 guessing dressed as tuning, so it is recorded here and not implemented.
 
+### 3.8 `DATA` — Meta compliance is audited per town hall, not assumed
+
+`cargo run -p coc-core --bin meta_audit` checks every town hall against the
+mechanical rules and prints a per-hall verdict. It exists because the first
+version of the spread rule was applied everywhere and *assumed* to have worked:
+the audit said 11 of 18 town halls still failed, almost all on air-defence
+separation, and TH12 still had a stacked heavy.
+
+Mechanical rules only — properties of the arrangement, not claims about how an
+attack would run:
+
+| Rule | Why |
+|---|---|
+| No two of the same heavy defence in one compartment | One freeze or Ice Golem stall removes the pair |
+| No heavy defence on the outer four tiles | A hero pair picks it off without committing |
+| Air Defenses at least 12 tiles apart | One funnel otherwise clears two |
+| Every defence behind walls | From TH6 up, where the budget allows it |
+
+All 18 pass. Anything requiring a judgement about attack behaviour — asymmetric
+compartments, offset halls, traps placed against pathing logic — is not in here,
+because the simulator is uncalibrated (§5) and encoding it would be guessing
+dressed as tuning.
+
+### 3.9 `DERIVED` — Separation is optimised directly, not through a proxy
+
+Two cell-level heuristics were tried for spreading and both failed, in opposite
+directions:
+
+1. *Prefer the compartment farthest from the last copy placed.* Order-dependent
+   and local: it fixed TH17 and broke TH13 in the same run.
+2. *Distribute copies around the compass.* Tidy angles that meant nothing once
+   the chosen room was full.
+
+Both optimised a proxy for the thing being measured. Placement for spread
+structures is now a farthest-point choice over **real candidate positions** —
+maximise the minimum distance to copies already down — which is the quantity the
+audit checks, so it cannot trade one town hall against another. That took the
+failures from 11 to 0 in one change.
+
+Two supporting adjustments were needed. Air Defense and Wizard Tower were
+promoted to placement rank 2: a spread structure has to be placed while there is
+still room to spread into, and left in the general tier they took whatever slots
+remained. And spreading deliberately leaves awkward gaps, so the lattice takes a
+quarter more headroom than the raw core area rather than a sixth — without it,
+eight defences were pushed outside the walls at TH14.
+
 ---
 
 ## 4. Open questions
