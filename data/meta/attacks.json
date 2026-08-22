@@ -1,101 +1,537 @@
 {
-  "as_of": "2026-08",
-  "note": "Published attack meta, transcribed from the sources below. This is what other players report, not something this project simulated. The simulator is uncalibrated (ASSUMPTIONS.md 5), so nothing here is a measured result.",
-  "sources": [
-    {"id": "ezarena", "title": "Best Clash of Clans Attack Strategy 2026 (All Town Halls)", "url": "https://www.ezarena.com/blog/best-attack-strategies-for-every-town-hall-2026/"},
-    {"id": "skycoach", "title": "Best Attack Strategies for Every Town Hall", "url": "https://skycoach.gg/blog/clash-of-clans/articles/best-attack-strategies-for-every-town-hall"},
-    {"id": "blueprint17", "title": "Best TH17 Attack Strategies of 2026", "url": "https://blueprintcoc.com/blogs/town-hall-17/best-th17-attack-strategies"},
-    {"id": "blueprint18", "title": "Best TH18 Attack Strategies", "url": "https://blueprintcoc.com/blogs/town-hall-18/best-th18-attack-strategies"},
-    {"id": "basedrop17", "title": "Best TH17 Attack Strategy 2026 - Root Rider Yeti", "url": "https://cocbasedrop.com/blog/best-th17-attack-strategy-2026-war-cwl"},
-    {"id": "blueprint14", "title": "4 Best TH14 Attack Strategies", "url": "https://blueprintcoc.com/blogs/town-hall-14/best-th14-attack-strategies"},
-    {"id": "basedrop14", "title": "Best TH14 Attack Strategy 2026", "url": "https://cocbasedrop.com/blog/best-th14-attack-strategy-2026-war-cwl"},
-    {"id": "pekkacils", "title": "TH17 War Base Design 2026: Anti 3-Star Meta Layout Analysis", "url": "https://pekkacils.blogspot.com/2026/02/th17-war-base-design-2026-anti-3-star-meta-layout-analysis.html"},
-    {"id": "skycoachbases", "title": "Best Clash of Clans Bases - Layouts, Design and How to Copy", "url": "https://skycoach.gg/blog/clash-of-clans/articles/best-clash-of-clans-bases"}
-  ],
-
-  "archetypes": [
-    {
-      "id": "ring",
-      "name": "Ring",
-      "what": "Defences arranged in a circle around the Town Hall, so troops walk the perimeter instead of driving in.",
-      "good_at": "Spam attacks. Reliably holds attackers to one star.",
-      "exposed_to": ["root_rider_ground"],
-      "source": "skycoachbases"
-    },
-    {
-      "id": "island",
-      "name": "Island",
-      "what": "Key defences separated into small isolated pockets, each needing its own troops or spells.",
-      "good_at": "Forcing an attacker to spend spells early, and punishing a single push.",
-      "exposed_to": ["air_spam"],
-      "source": "skycoachbases"
-    },
-    {
-      "id": "compartment",
-      "name": "Compartment",
-      "what": "Walls divide the base into rooms, so a breach in one does not open the rest.",
-      "good_at": "Breaking troop flow; at high town halls this causes time fails.",
-      "exposed_to": ["fireball_yeti"],
-      "source": "pekkacils"
-    },
-    {
-      "id": "anti2",
-      "name": "Anti-two-star",
-      "what": "Town Hall dead centre and protected at all costs; conceding damage to keep the hall.",
-      "good_at": "Trophy pushing and Legend League.",
-      "exposed_to": ["queen_charge_hybrid"],
-      "source": "skycoachbases"
-    },
-    {
-      "id": "anti3",
-      "name": "Anti-three-star",
-      "what": "Denies 100%. The Town Hall is deliberately less protected than in an anti-two.",
-      "good_at": "War and CWL, where the third star is what matters.",
-      "exposed_to": ["super_bowler_smash"],
-      "source": "skycoachbases"
-    }
-  ],
-
-  "attacks": {
-    "giant_archer":       {"name": "Giants + Archers",        "kind": "ground", "note": "Giants tank, Archers clean up; Wall Breakers once Mortars matter.", "source": "ezarena"},
-    "balloon_early":      {"name": "Balloons",                "kind": "air",    "note": "Strong where anti-air coverage is still thin.", "source": "ezarena"},
-    "giant_wizard":       {"name": "Giants + Wizards + Balloons", "kind": "hybrid", "note": "Hybrid rhythm once Wizards unlock.", "source": "ezarena"},
-    "giant_healer":       {"name": "Giant push with Healers", "kind": "ground", "note": "Heal Spell and Healers make a sustained Giant tankline reliable.", "source": "ezarena"},
-    "zap_dragon":         {"name": "Zap Dragons",             "kind": "air",    "note": "Lightning the Air Defenses, attack from behind the Air Sweeper, spread Dragons on a flat side.", "source": "ezarena"},
-    "drag_lavaloon":      {"name": "Dragon LavaLoon",         "kind": "air",    "note": "Funnel for Dragons, then Lava Hound and Balloons into the core.", "source": "ezarena"},
-    "queen_charge_lalo":  {"name": "Queen Charge LavaLoon",   "kind": "air",    "note": "Queen charge clears key Air Defenses or heroes first.", "source": "ezarena"},
-    "super_hogs":         {"name": "Super Hogs",              "kind": "ground", "note": "Effective against both ring and compartment bases.", "source": "blueprint14"},
-    "super_witch_smash":  {"name": "Super Witch Smash",       "kind": "ground", "note": "Consistent heavy ground push.", "source": "blueprint14"},
-    "root_rider_ground":  {"name": "Root Rider ground",       "kind": "ground", "note": "Excels against spread bases, which are common in war.", "source": "basedrop17"},
-    "super_dragon":       {"name": "Super Dragons",           "kind": "air",    "note": "Simple funnel and a straight push; forgiving of imperfect timing.", "source": "blueprint14"},
-    "fireball_yeti":      {"name": "Fireball Super Yetis",    "kind": "ground", "note": "Handles compact, stacked cores better than spread bases.", "source": "basedrop17"},
-    "rc_walk_dragons":    {"name": "RC Walk Dragons",         "kind": "air",    "note": "The Royal Champion removes key defences early; the forgiving TH17 option.", "source": "blueprint17"},
-    "queen_charge_hybrid":{"name": "Queen Charge Hybrid",     "kind": "ground", "note": "Skill-based; high three-star ceiling.", "source": "ezarena"},
-    "air_spam":           {"name": "Electro Dragon spam",     "kind": "air",    "note": "Beginner-friendly, little micromanagement. Broken up by gaps and staggered defences.", "source": "pekkacils"},
-    "super_bowler_smash": {"name": "Super Bowler Smash",      "kind": "ground", "note": "The safe default at TH18.", "source": "blueprint18"},
-    "hydra":              {"name": "Hydra with Totem Spells", "kind": "air",    "note": "The faster air alternative at TH18.", "source": "blueprint18"},
-    "rocket_edrag":       {"name": "Rocket E-Drag + Dragon Duke", "kind": "air", "note": "Heavy damage with clean pathing; war and Legend.", "source": "blueprint18"},
-    "rc_root_thrower":    {"name": "RC Walk Root Rider + Throwers", "kind": "ground", "note": "Reported as the primary TH18 strategy for 2026.", "source": "blueprint18"}
+ "as_of": "2026-08",
+ "note": "Published attack meta, transcribed from the sources below. This is what other players report, not something this project simulated. The simulator is uncalibrated (ASSUMPTIONS.md 5), so nothing here is a measured result.",
+ "sources": [
+  {
+   "id": "ezarena",
+   "title": "Best Clash of Clans Attack Strategy 2026 (All Town Halls)",
+   "url": "https://www.ezarena.com/blog/best-attack-strategies-for-every-town-hall-2026/"
   },
-
-  "townhalls": {
-    "1":  ["giant_archer"],
-    "2":  ["giant_archer"],
-    "3":  ["giant_archer"],
-    "4":  ["giant_archer", "balloon_early"],
-    "5":  ["giant_wizard", "balloon_early"],
-    "6":  ["giant_healer", "giant_wizard"],
-    "7":  ["zap_dragon", "giant_healer"],
-    "8":  ["zap_dragon", "giant_healer"],
-    "9":  ["zap_dragon", "queen_charge_lalo"],
-    "10": ["drag_lavaloon", "queen_charge_lalo"],
-    "11": ["queen_charge_lalo", "super_witch_smash", "air_spam"],
-    "12": ["queen_charge_lalo", "super_witch_smash", "air_spam"],
-    "13": ["super_hogs", "super_witch_smash", "air_spam"],
-    "14": ["super_hogs", "super_witch_smash", "super_dragon", "root_rider_ground"],
-    "15": ["root_rider_ground", "super_dragon", "queen_charge_hybrid"],
-    "16": ["root_rider_ground", "super_dragon", "queen_charge_hybrid"],
-    "17": ["rc_walk_dragons", "root_rider_ground", "fireball_yeti", "queen_charge_lalo"],
-    "18": ["rc_root_thrower", "super_bowler_smash", "hydra", "rocket_edrag"]
+  {
+   "id": "skycoach",
+   "title": "Best Attack Strategies for Every Town Hall",
+   "url": "https://skycoach.gg/blog/clash-of-clans/articles/best-attack-strategies-for-every-town-hall"
+  },
+  {
+   "id": "blueprint17",
+   "title": "Best TH17 Attack Strategies of 2026",
+   "url": "https://blueprintcoc.com/blogs/town-hall-17/best-th17-attack-strategies"
+  },
+  {
+   "id": "blueprint18",
+   "title": "Best TH18 Attack Strategies",
+   "url": "https://blueprintcoc.com/blogs/town-hall-18/best-th18-attack-strategies"
+  },
+  {
+   "id": "basedrop17",
+   "title": "Best TH17 Attack Strategy 2026 - Root Rider Yeti",
+   "url": "https://cocbasedrop.com/blog/best-th17-attack-strategy-2026-war-cwl"
+  },
+  {
+   "id": "blueprint14",
+   "title": "4 Best TH14 Attack Strategies",
+   "url": "https://blueprintcoc.com/blogs/town-hall-14/best-th14-attack-strategies"
+  },
+  {
+   "id": "basedrop14",
+   "title": "Best TH14 Attack Strategy 2026",
+   "url": "https://cocbasedrop.com/blog/best-th14-attack-strategy-2026-war-cwl"
+  },
+  {
+   "id": "pekkacils",
+   "title": "TH17 War Base Design 2026: Anti 3-Star Meta Layout Analysis",
+   "url": "https://pekkacils.blogspot.com/2026/02/th17-war-base-design-2026-anti-3-star-meta-layout-analysis.html"
+  },
+  {
+   "id": "skycoachbases",
+   "title": "Best Clash of Clans Bases - Layouts, Design and How to Copy",
+   "url": "https://skycoach.gg/blog/clash-of-clans/articles/best-clash-of-clans-bases"
+  },
+  {
+   "id": "skycoach_all",
+   "title": "Best Clash of Clans Attack Strategy for Every Town Hall 2026",
+   "url": "https://skycoach.gg/blog/clash-of-clans/articles/best-attack-strategies-for-every-town-hall"
+  },
+  {
+   "id": "blueprint_all",
+   "title": "Best Clash of Clans Armies for every Town Hall in 2026",
+   "url": "https://blueprintcoc.com/blogs/coc-attack-strategies/best-clash-of-clans-army"
+  },
+  {
+   "id": "fandom56",
+   "title": "TH 5-6 attack strategy (Clash of Clans Wiki)",
+   "url": "https://clashofclans.fandom.com/wiki/Attack_Strategies:TH_5-6_attack_strategy"
   }
+ ],
+ "archetypes": [
+  {
+   "id": "ring",
+   "name": "Ring",
+   "what": "Defences arranged in a circle around the Town Hall, so troops walk the perimeter instead of driving in.",
+   "good_at": "Spam attacks. Reliably holds attackers to one star.",
+   "exposed_to": [
+    "root_rider_ground"
+   ],
+   "source": "skycoachbases"
+  },
+  {
+   "id": "island",
+   "name": "Island",
+   "what": "Key defences separated into small isolated pockets, each needing its own troops or spells.",
+   "good_at": "Forcing an attacker to spend spells early, and punishing a single push.",
+   "exposed_to": [
+    "air_spam"
+   ],
+   "source": "skycoachbases"
+  },
+  {
+   "id": "compartment",
+   "name": "Compartment",
+   "what": "Walls divide the base into rooms, so a breach in one does not open the rest.",
+   "good_at": "Breaking troop flow; at high town halls this causes time fails.",
+   "exposed_to": [
+    "fireball_yeti"
+   ],
+   "source": "pekkacils"
+  },
+  {
+   "id": "anti2",
+   "name": "Anti-two-star",
+   "what": "Town Hall dead centre and protected at all costs; conceding damage to keep the hall.",
+   "good_at": "Trophy pushing and Legend League.",
+   "exposed_to": [
+    "queen_charge_hybrid"
+   ],
+   "source": "skycoachbases"
+  },
+  {
+   "id": "anti3",
+   "name": "Anti-three-star",
+   "what": "Denies 100%. The Town Hall is deliberately less protected than in an anti-two.",
+   "good_at": "War and CWL, where the third star is what matters.",
+   "exposed_to": [
+    "super_bowler_smash"
+   ],
+   "source": "skycoachbases"
+  }
+ ],
+ "attacks": {
+  "giant_archer": {
+   "name": "Giants + Archers",
+   "kind": "ground",
+   "note": "Giants tank, Archers clean up; Wall Breakers once Mortars matter.",
+   "source": "ezarena"
+  },
+  "balloon_early": {
+   "name": "Balloons",
+   "kind": "air",
+   "note": "Strong where anti-air coverage is still thin.",
+   "source": "ezarena"
+  },
+  "giant_wizard": {
+   "name": "Giants + Wizards + Balloons",
+   "kind": "hybrid",
+   "note": "Hybrid rhythm once Wizards unlock.",
+   "source": "ezarena"
+  },
+  "giant_healer": {
+   "name": "Giant push with Healers",
+   "kind": "ground",
+   "note": "Heal Spell and Healers make a sustained Giant tankline reliable.",
+   "source": "ezarena"
+  },
+  "zap_dragon": {
+   "name": "Zap Dragons",
+   "kind": "air",
+   "note": "Lightning the Air Defenses, attack from behind the Air Sweeper, spread Dragons on a flat side.",
+   "source": "ezarena"
+  },
+  "drag_lavaloon": {
+   "name": "Dragon LavaLoon",
+   "kind": "air",
+   "note": "Funnel for Dragons, then Lava Hound and Balloons into the core.",
+   "source": "ezarena"
+  },
+  "queen_charge_lalo": {
+   "name": "Queen Charge LavaLoon",
+   "kind": "air",
+   "note": "Queen charge clears key Air Defenses or heroes first.",
+   "source": "ezarena"
+  },
+  "super_hogs": {
+   "name": "Super Hogs",
+   "kind": "ground",
+   "note": "Effective against both ring and compartment bases.",
+   "source": "blueprint14"
+  },
+  "super_witch_smash": {
+   "name": "Super Witch Smash",
+   "kind": "ground",
+   "note": "Consistent heavy ground push.",
+   "source": "blueprint14"
+  },
+  "root_rider_ground": {
+   "name": "Root Rider ground",
+   "kind": "ground",
+   "note": "Excels against spread bases, which are common in war.",
+   "source": "basedrop17"
+  },
+  "super_dragon": {
+   "name": "Super Dragons",
+   "kind": "air",
+   "note": "Simple funnel and a straight push; forgiving of imperfect timing.",
+   "source": "blueprint14"
+  },
+  "fireball_yeti": {
+   "name": "Fireball Super Yetis",
+   "kind": "ground",
+   "note": "Handles compact, stacked cores better than spread bases.",
+   "source": "basedrop17"
+  },
+  "rc_walk_dragons": {
+   "name": "RC Walk Dragons",
+   "kind": "air",
+   "note": "The Royal Champion removes key defences early; the forgiving TH17 option.",
+   "source": "blueprint17"
+  },
+  "queen_charge_hybrid": {
+   "name": "Queen Charge Hybrid",
+   "kind": "ground",
+   "note": "Skill-based; high three-star ceiling.",
+   "source": "ezarena"
+  },
+  "air_spam": {
+   "name": "Electro Dragon spam",
+   "kind": "air",
+   "note": "Beginner-friendly, little micromanagement. Broken up by gaps and staggered defences.",
+   "source": "pekkacils"
+  },
+  "super_bowler_smash": {
+   "name": "Super Bowler Smash",
+   "kind": "ground",
+   "note": "The safe default at TH18.",
+   "source": "blueprint18"
+  },
+  "hydra": {
+   "name": "Hydra with Totem Spells",
+   "kind": "air",
+   "note": "The faster air alternative at TH18.",
+   "source": "blueprint18"
+  },
+  "rocket_edrag": {
+   "name": "Rocket E-Drag + Dragon Duke",
+   "kind": "air",
+   "note": "Heavy damage with clean pathing; war and Legend.",
+   "source": "blueprint18"
+  },
+  "rc_root_thrower": {
+   "name": "RC Walk Root Rider + Throwers",
+   "kind": "ground",
+   "note": "Reported as the primary TH18 strategy for 2026.",
+   "source": "blueprint18"
+  },
+  "barb_rush": {
+   "name": "Barbarian rush",
+   "kind": "ground",
+   "note": "The only army available before Archers; nothing to funnel, nothing to tank.",
+   "source": "skycoach_all"
+  },
+  "giant_archer_wb": {
+   "name": "Giants + Archers + Wall Breakers",
+   "kind": "ground",
+   "note": "Wall Breakers added so the tankline reaches the Mortar quickly.",
+   "source": "skycoach_all"
+  },
+  "balloon_archer": {
+   "name": "Balloons + Archers",
+   "kind": "air",
+   "note": "Air dominates here because anti-air coverage is still limited.",
+   "source": "skycoach_all"
+  },
+  "ground_push": {
+   "name": "Full ground army push",
+   "kind": "ground",
+   "note": "Air becomes inconsistent at this level, so heavy ground is the reliable entry.",
+   "source": "skycoach_all"
+  },
+  "mass_dragon": {
+   "name": "Mass Dragons",
+   "kind": "air",
+   "note": "Reported as one of the easiest strategies in the game at this level.",
+   "source": "skycoach_all"
+  },
+  "goho": {
+   "name": "GoHo (Golem + Hog Riders)",
+   "kind": "ground",
+   "note": "Teaches spell timing and placement.",
+   "source": "skycoach_all"
+  },
+  "witch_slap": {
+   "name": "Witch Slap",
+   "kind": "ground",
+   "note": "Sustained pressure from multiple Golems and Witches.",
+   "source": "skycoach_all"
+  },
+  "zap_lalo": {
+   "name": "Zap LavaLoon",
+   "kind": "air",
+   "note": "Lightning the Air Defenses, then Lava Hound and Balloons.",
+   "source": "blueprint_all"
+  },
+  "mass_witches": {
+   "name": "Mass Witches",
+   "kind": "ground",
+   "note": "Skeleton pressure carries the push.",
+   "source": "blueprint_all"
+  },
+  "falcon": {
+   "name": "Falcon (Queen Charge Valkyries + Bowlers)",
+   "kind": "ground",
+   "note": "Queen charge opens a side, Valkyries and Bowlers clear the core.",
+   "source": "blueprint_all"
+  },
+  "penta_lalo": {
+   "name": "Penta LavaLoon",
+   "kind": "air",
+   "note": "Heavier LavaLoon variant.",
+   "source": "blueprint_all"
+  },
+  "zap_witches": {
+   "name": "Zap Witches",
+   "kind": "ground",
+   "note": "Spell value combined with strong ground troops.",
+   "source": "skycoach_all"
+  },
+  "electro_dragon": {
+   "name": "Electro Dragons",
+   "kind": "air",
+   "note": "Chain damage; broken up by gaps and staggered defences.",
+   "source": "blueprint_all"
+  },
+  "dragbat": {
+   "name": "DragBat",
+   "kind": "air",
+   "note": "Hybrid air: remove the splash damage, then release Bats.",
+   "source": "skycoach_all"
+  },
+  "super_witch_fireball": {
+   "name": "Super Witch Fireball",
+   "kind": "ground",
+   "note": "Fireball clears a key defence ahead of the Super Witches.",
+   "source": "blueprint_all"
+  },
+  "yeti_superwiz": {
+   "name": "Yeti + Super Wizard Smash",
+   "kind": "ground",
+   "note": "Heavy ground for breaking strong bases.",
+   "source": "skycoach_all"
+  },
+  "yeti_superarcher": {
+   "name": "Yeti Super Archer Spam",
+   "kind": "ground",
+   "note": "Super Archers behind a Yeti tankline.",
+   "source": "blueprint_all"
+  },
+  "sa_clone_hydra": {
+   "name": "Super Archer Clone Hydra",
+   "kind": "air",
+   "note": "Clone spell extends the Super Archer value.",
+   "source": "blueprint_all"
+  },
+  "qc_dragon_riders": {
+   "name": "Queen Charge Dragon Riders",
+   "kind": "air",
+   "note": "Queen opens, Dragon Riders follow.",
+   "source": "blueprint_all"
+  },
+  "blimp_dragons": {
+   "name": "Mass Dragons with Battle Blimp",
+   "kind": "air",
+   "note": "Adaptability over brute force; the Blimp picks the entry.",
+   "source": "skycoach_all"
+  },
+  "sa_blimp_dragons": {
+   "name": "Super Archer Blimp Dragons",
+   "kind": "air",
+   "note": "Blimp drops Super Archers into the core, Dragons clean.",
+   "source": "blueprint_all"
+  },
+  "hydra_rider": {
+   "name": "Hydra (Dragons, Riders, Blimp)",
+   "kind": "air",
+   "note": "Emphasises pathing and avoiding the Clan Castle.",
+   "source": "skycoach_all"
+  },
+  "warden_yetis": {
+   "name": "Warden Charge Super Yetis",
+   "kind": "ground",
+   "note": "Warden charge ahead of the Yeti push.",
+   "source": "blueprint_all"
+  },
+  "fireball_loons": {
+   "name": "Fireball Rocket Loons",
+   "kind": "air",
+   "note": "Fireball removes a key air defence before the Balloons run.",
+   "source": "blueprint_all"
+  },
+  "rc_root_riders": {
+   "name": "RC Charge Root Riders",
+   "kind": "ground",
+   "note": "Royal Champion opens the side the Root Riders enter.",
+   "source": "blueprint_all"
+  },
+  "mass_rc_dragons": {
+   "name": "Mass RC Charge Dragons",
+   "kind": "air",
+   "note": "Royal Champion charge into a straight dragon push.",
+   "source": "blueprint_all"
+  },
+  "root_valk": {
+   "name": "Root Riders + Valkyries",
+   "kind": "ground",
+   "note": "Relies on controlled ground movement.",
+   "source": "skycoach_all"
+  },
+  "drag_invis": {
+   "name": "Dragons with Invisibility support",
+   "kind": "air",
+   "note": "Precision over raw deployment.",
+   "source": "skycoach_all"
+  },
+  "air_slice": {
+   "name": "Air Slice",
+   "kind": "air",
+   "note": "Cuts one high-value air slice instead of forcing the core.",
+   "source": "skycoach_all"
+  },
+  "super_dragon_wagon": {
+   "name": "Super Dragons (Sky Wagon)",
+   "kind": "air",
+   "note": "Super Dragons with the right setup, timing and pathing control.",
+   "source": "blueprint18"
+  },
+  "duke_bowler": {
+   "name": "Dragon Duke Charge + Super Bowler smash",
+   "kind": "ground",
+   "note": "Described as the most overpowered ground push in the game.",
+   "source": "blueprint18"
+  },
+  "healer_giants": {
+   "name": "Giants + Healers",
+   "kind": "ground",
+   "note": "Healers and the Heal Spell make a 12-Giant tankline reliable.",
+   "source": "ezarena"
+  },
+  "balloon_wizard": {
+   "name": "Mass Balloons + Wizards",
+   "kind": "air",
+   "note": "22 Balloons with Wizard support is a reported TH5 line.",
+   "source": "fandom56"
+  }
+ },
+ "townhalls": {
+  "1": [
+   "barb_rush"
+  ],
+  "2": [
+   "giant_archer"
+  ],
+  "3": [
+   "giant_archer_wb",
+   "giant_archer"
+  ],
+  "4": [
+   "balloon_archer",
+   "giant_archer_wb"
+  ],
+  "5": [
+   "giant_wizard",
+   "balloon_wizard",
+   "balloon_archer"
+  ],
+  "6": [
+   "ground_push",
+   "healer_giants",
+   "giant_wizard"
+  ],
+  "7": [
+   "mass_dragon",
+   "zap_dragon",
+   "healer_giants"
+  ],
+  "8": [
+   "goho",
+   "zap_dragon",
+   "ground_push"
+  ],
+  "9": [
+   "witch_slap",
+   "zap_lalo",
+   "zap_dragon",
+   "mass_witches"
+  ],
+  "10": [
+   "zap_dragon",
+   "zap_lalo",
+   "falcon",
+   "penta_lalo",
+   "drag_lavaloon"
+  ],
+  "11": [
+   "zap_witches",
+   "electro_dragon",
+   "queen_charge_hybrid",
+   "queen_charge_lalo"
+  ],
+  "12": [
+   "dragbat",
+   "zap_dragon",
+   "super_witch_fireball",
+   "queen_charge_hybrid"
+  ],
+  "13": [
+   "yeti_superwiz",
+   "yeti_superarcher",
+   "sa_clone_hydra",
+   "qc_dragon_riders"
+  ],
+  "14": [
+   "blimp_dragons",
+   "super_dragon",
+   "sa_blimp_dragons",
+   "fireball_yeti",
+   "rc_walk_dragons"
+  ],
+  "15": [
+   "hydra_rider",
+   "warden_yetis",
+   "fireball_loons",
+   "rc_root_riders",
+   "mass_rc_dragons"
+  ],
+  "16": [
+   "root_valk",
+   "fireball_yeti",
+   "rc_root_riders",
+   "super_witch_fireball",
+   "rc_walk_dragons"
+  ],
+  "17": [
+   "fireball_yeti",
+   "rc_walk_dragons",
+   "root_rider_ground",
+   "fireball_loons",
+   "drag_invis",
+   "queen_charge_lalo"
+  ],
+  "18": [
+   "rc_root_thrower",
+   "super_bowler_smash",
+   "hydra",
+   "rocket_edrag",
+   "super_dragon_wagon",
+   "duke_bowler",
+   "air_slice"
+  ]
+ }
 }
