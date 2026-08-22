@@ -339,14 +339,20 @@ Unresolved. Listed so they are not quietly forgotten.
 Added when 1:1 art extraction was brought into scope. Full notes in
 `docs/ART_FORMATS.md`.
 
-### 6.1 `DATA` — Clash is a 3D game; there are almost no sprite sheets
+### 6.1 `DATA` — Buildings are 2D sprites; only characters are 3D
 
-Of 9,075 shipped files, 3,079 are `.glb` 3D models and 1,833 are `.sctx`
-texture atlases. Only **60** are plain `.png`, and those are UI and effect
-bitmaps. Building and troop art is 3D geometry under `sc3d/`.
+**This corrects an earlier entry** which claimed building art was 3D geometry.
+It is not.
 
-Any plan that assumed top-down sprites for buildings is wrong: matching the
-game 1:1 means importing models, not blitting images.
+Of 9,075 shipped files, 3,079 are `.glb` and 1,833 are `.sctx`. But the `.glb`
+models resolve to only **38 distinct stems**, and every one is a character:
+`alchemist`, `archerqueen`, `barbking`, `grandwarden`, `royalchampion`,
+`lassi`, `unicorn`, and so on — heroes, pets and a few troops.
+
+Building art is 2D, in `sc/buildings.sc` plus its **71** `.sctx` atlases
+(`buildings_0` … `buildings_70`), with further sheets in `buildings2`,
+`building_bases` and `buildings_cc`. That is exactly what a top-down or
+isometric renderer needs, so the art path is much shorter than first assessed.
 
 ### 6.2 `DATA` — `.glb` is glTF 2.0 with a non-standard descriptor chunk
 
@@ -367,49 +373,132 @@ decompressed payload is a flat array of 16-byte blocks beginning
 decompressed length matched the actual size exactly on both samples tested
 (618,240 and 3,982,080 bytes).
 
-### 6.4 `UNVERIFIED` — SCTX image dimensions
+### 6.4 `DATA` — SCTX dimensions and block footprint, solved
 
-**Deliberately left unresolved rather than guessed.**
+**Supersedes the previous entry**, which recorded these as unresolved and
+warned against reading them at a fixed offset. The warning was right; the
+reason is now understood.
 
-Reading a `u16` pair at offset 40 looks right and even validates on one file:
-`chr_cannon_mortar_cart_0.sctx` reads 2928 x 1360, and that product is exactly
-its payload size. On `chr_cannon_cart_0.sctx` the same offset gives 1008, and
-618,240 / 1008 is not an integer; that payload factors as 672 x 920 instead.
+The header is not three opaque words. It is the standard **size-prefixed
+FlatBuffers preamble**:
 
-The offset cannot be stable, because the metadata is FlatBuffers: an omitted
-field is absent from the vtable and shifts everything after it. Dimensions
-must be read through the vtable, and the field index is not yet established
-across enough files.
+```
+[0..4]   u32   size of the FlatBuffers region
+[4..8]   u32   offset to the root table, relative to offset 4
+[8..12]  char  file identifier, "SCTX"
+```
 
-`dimension_candidates()` returns every pair consistent with the payload size
-rather than choosing one, and a test asserts the answer stays ambiguous, so
-that collapsing to a single candidate registers as a real finding instead of
-passing quietly.
+The buffer base is **offset 4** — not 0, and not 12 as first assumed. That is
+precisely why a fixed offset validated on one file and silently failed on the
+next: the root table starts at a different place depending on how many fields
+the encoder wrote.
 
-This is the pattern the whole project is meant to avoid: a constant that works
-on the first sample and is wrong everywhere else.
+Read through the vtable, the fields are stable across every file tested:
 
-### 6.5 `ASSUMED` — ASTC block footprint is 4x4
+| Field | Meaning |
+|---|---|
+| 2 | width in pixels |
+| 3 | height in pixels |
+| 6 | format enum (5 and 12 both observed) |
+| 7 | decompressed payload length |
 
-Confidence: low. Used only to enumerate dimension candidates, never to decode.
+### 6.5 `DERIVED` — The payload is ASTC 6x6
 
-16-byte blocks are consistent with every ASTC footprint, so block size does
-not identify it. 4x4 is the most common choice for sprite atlases. Nothing
-depends on this being right yet.
+With real dimensions the footprint follows arithmetically. For every file
+tested, `ceil(w/6) * ceil(h/6) * 16` equals the payload length **exactly**:
 
-### 6.6 `DATA` — `.sc` is version 6, little-endian
+| File | Dimensions | Blocks | ceil(w/6) x ceil(h/6) |
+|---|---|---|---|
+| `chr_cannon_cart_0` | 1008 x 1376 | 38,640 | 168 x 230 |
+| `chr_cannon_mortar_cart_0` | 2928 x 3058 | 248,880 | 488 x 510 |
+| `buildings_0` | 608 x 1004 | 17,136 | 102 x 168 |
+| `buildings_2` | 1632 x 2042 | 92,752 | 272 x 341 |
+
+No other footprint accounts for the payload, so this is derived rather than
+assumed. Confirmed by decoding `sc/buildings_0.sctx` to PNG and looking at it:
+correct colours, clean alpha, recognisable buildings.
+
+### 6.6 `DATA` — Two payload modes, detected rather than flagged
+
+Both ship in the same version:
+
+- **ZSTD-compressed** — character atlases (`chr_*`).
+- **Stored raw** — the building atlases; ASTC blocks sit at the end of the file.
+
+No field has been identified that declares which, so the decoder detects it: a
+ZSTD frame after the metadata means compressed, its absence means raw. If a
+future format adds a third mode this fails loudly on the length check rather
+than producing garbage.
+
+### 6.7 `ASSUMED` — Sprite-to-building mapping is by footprint, for now
+
+Confidence: low, and visible in the preview.
+
+Individual sprites are recovered by flood-filling opaque regions of an atlas,
+which works because sprites are packed with transparent gutters. What that does
+not give is **which sprite is which building**.
+
+The mapping is reachable: `buildings.csv` carries `SWF` and `ExportName`
+columns (Cannon is `basic_turret_lvl1` in `sc/buildings.sc`), and those exact
+strings appear in the `.sc` file's string table. Resolving them needs the `.sc`
+record stream parsed — shape and movie-clip records down to texture rectangles.
+
+Until then the renderer assigns sprites by footprint size. The art is real and
+the sizes are right, but a given building is not necessarily showing its own
+sprite, and any preview must say so.### 6.8 `DATA` — `.sc` is version 6, little-endian
 
 An initial big-endian reading gave 100663296 instead of 6 and was caught by a
 test against a real file. Only the header is parsed; the record stream is
 unmapped.
 
-### 6.7 Redistribution of extracted art
+### 6.9 Redistribution of extracted art
 
 Committing decoded art to a public repository redistributes Supercell's
 copyrighted assets, which is a materially different proposition from the
 balance CSVs. This was raised and the project owner directed that assets be
 committed. Recorded here as a decision made with the tradeoff stated, not as
 an oversight.
+
+---
+
+## 7. Layout links
+
+### 7.1 `DATA` — A base link cannot carry a layout, so it cannot be generated
+
+The brief's Section 8 asked for the in-game base link encoding to be supported
+"if you can decode it". It cannot be, and the reason is structural rather than
+a matter of effort.
+
+A layout link takes the form:
+
+```
+https://link.clashofclans.com/?action=OpenLayout&id=TH17%3AHV%3A<32 chars>
+```
+
+The base64url payload decodes to exactly **24 bytes**, of which bytes 4-8 carry
+the base slot (1, 2 or 3). Twenty-four bytes cannot describe 150 buildings at
+44x44 resolution — it is not a compression question, there is not enough
+entropy in the string.
+
+So the link is an **identifier for a layout already stored on Supercell's
+servers**, tied to a player account and one of their slots, and community
+tooling confirms the in-app deep-link handler is the only thing that can
+resolve one.
+
+Consequences, which are worth stating plainly because they bound the product:
+
+- A layout designed offline **cannot be turned into a working link**. There is
+  no client-side encoding to reverse.
+- Sites that share base links are sharing bases somebody actually built in
+  game, not generated ones.
+- Export is therefore a **placement plan** — exact tile coordinates followed by
+  hand in the in-game editor — plus the project's own JSON schema.
+
+### 7.2 Consequence for the map extent
+
+This also closes the door on deriving the 44x44 grid extent from a link, which
+§3.1 held open. A 24-byte identifier contains no coordinates. The extent stays
+an unverified community figure unless another source is found.
 
 ---
 
