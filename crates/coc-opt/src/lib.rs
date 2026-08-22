@@ -12,7 +12,7 @@
 //! three-star". When the simulator is calibrated, [`Objective`] is where a
 //! battle-based fitness slots in without touching the search.
 
-use coc_core::grid::{idx, Layout, Rect, BUILDABLE, ORIGIN, TOTAL};
+use coc_core::grid::{idx, Layout, Rect, TOTAL};
 use coc_core::legality;
 use coc_core::metrics::{evaluate, Metrics, Weights};
 use rand::Rng;
@@ -144,10 +144,23 @@ fn mutate(layout: &Layout, rng: &mut ChaCha8Rng) -> Option<Layout> {
         return None;
     }
     let mut next = layout.clone();
+    // Walls are left exactly as the builder laid them.
+    //
+    // There used to be a third mutation that moved one wall tile to a random
+    // adjacent square. A single-tile nudge can only ever break a lattice — it
+    // cannot discover a better one — and that is what it did: the seed's wall
+    // network is a single connected component at every town hall, and annealing
+    // was shredding TH15's into 111 loose blocks while reporting a *higher*
+    // score, because scattered tiles still interrupt the enclosure flood fill.
+    //
+    // `metrics::wall_integrity` now prices that damage, which stopped the worst
+    // of it, but the mutation remained a move whose entire reachable
+    // neighbourhood is worse than where it started. The builder sizes the
+    // lattice from what has to fit inside it and subdivides with the leftover
+    // budget; the optimizer's job is to arrange structures within that.
     match rng.gen_range(0..100) {
-        0..=54 => translate(&mut next, rng)?,
-        55..=84 => swap_pair(&mut next, rng)?,
-        _ => nudge_wall(&mut next, rng)?,
+        0..=63 => translate(&mut next, rng)?,
+        _ => swap_pair(&mut next, rng)?,
     }
     Some(next)
 }
@@ -221,44 +234,6 @@ fn swap_pair(layout: &mut Layout, rng: &mut ChaCha8Rng) -> Option<()> {
     None
 }
 
-/// Moves one wall segment to an adjacent free tile.
-fn nudge_wall(layout: &mut Layout, rng: &mut ChaCha8Rng) -> Option<()> {
-    if layout.walls.is_empty() {
-        return None;
-    }
-    let i = rng.gen_range(0..layout.walls.len());
-    let (x, y) = layout.walls[i];
-    let mut occ = vec![0u8; (TOTAL * TOTAL) as usize];
-    for p in &layout.placements {
-        for (px, py) in p.rect.tiles() {
-            if let Some(c) = idx(px, py) {
-                occ[c] = 1;
-            }
-        }
-    }
-    for (j, &(wx, wy)) in layout.walls.iter().enumerate() {
-        if j != i {
-            if let Some(c) = idx(wx, wy) {
-                occ[c] = 2;
-            }
-        }
-    }
-    for _ in 0..6 {
-        let nx = x + rng.gen_range(-1..=1);
-        let ny = y + rng.gen_range(-1..=1);
-        if (nx, ny) == (x, y) {
-            continue;
-        }
-        if nx < ORIGIN || ny < ORIGIN || nx >= ORIGIN + BUILDABLE || ny >= ORIGIN + BUILDABLE {
-            continue;
-        }
-        if idx(nx, ny).is_some_and(|c| occ[c] == 0) {
-            layout.walls[i] = (nx, ny);
-            return Some(());
-        }
-    }
-    None
-}
 
 #[cfg(test)]
 mod tests {
@@ -321,5 +296,70 @@ mod tests {
         let start = base();
         let out = anneal(&start, &obj, Config { iterations: 2000, ..Default::default() });
         assert_eq!(out.layout.placements.len(), start.placements.len());
+    }
+}
+
+#[cfg(test)]
+mod wall_preservation {
+    use super::*;
+    use coc_core::grid::Layout;
+
+    /// Number of 4-connected components in a layout's wall network.
+    fn components(l: &Layout) -> usize {
+        let set: std::collections::HashSet<(i32, i32)> = l.walls.iter().copied().collect();
+        let mut seen = std::collections::HashSet::new();
+        let mut n = 0;
+        for &p in &l.walls {
+            if !seen.insert(p) {
+                continue;
+            }
+            n += 1;
+            let mut stack = vec![p];
+            while let Some((x, y)) = stack.pop() {
+                for q in [(x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)] {
+                    if set.contains(&q) && seen.insert(q) {
+                        stack.push(q);
+                    }
+                }
+            }
+        }
+        n
+    }
+
+    #[test]
+    fn annealing_never_breaks_up_the_wall_network() {
+        // The regression: annealing used to shred a single connected lattice
+        // into as many as 111 loose blocks — TH15 — while reporting a better
+        // score, because scattered tiles still interrupt the enclosure flood
+        // fill. Walls now come out of the optimizer exactly as they went in.
+        let Ok(d) = coc_data::GameData::load_default() else { return };
+        let obj = Geometric { weights: coc_core::Weights::war() };
+        for th in [3, 9, 15, 17] {
+            let seed = coc_core::builder::seed(&d, th, 0xC0FFEE);
+            let before = components(&seed);
+            let out = anneal(&seed, &obj, Config { iterations: 4_000, ..Config::default() });
+            assert_eq!(
+                out.layout.walls, seed.walls,
+                "TH{th}: the optimizer moved wall tiles"
+            );
+            assert_eq!(components(&out.layout), before, "TH{th}: wall network changed");
+            assert_eq!(before, 1, "TH{th}: the seed lattice should be one piece");
+        }
+    }
+
+    #[test]
+    fn annealing_still_improves_the_layout() {
+        // Removing a mutation must not leave the search unable to do anything.
+        let Ok(d) = coc_data::GameData::load_default() else { return };
+        let obj = Geometric { weights: coc_core::Weights::war() };
+        let seed = coc_core::builder::seed(&d, 11, 0xC0FFEE);
+        let out = anneal(&seed, &obj, Config { iterations: 6_000, ..Config::default() });
+        assert!(
+            out.final_score >= out.start_score,
+            "annealing went backwards: {:.4} -> {:.4}",
+            out.start_score,
+            out.final_score
+        );
+        assert!(out.improved > 0, "no candidate was ever an improvement");
     }
 }

@@ -37,6 +37,8 @@ pub struct Metrics {
     pub balance: f64,
     /// Fraction of structures not exposed on the outer ring.
     pub perimeter_safety: f64,
+    /// How much of the wall budget is joined into continuous barriers.
+    pub wall_integrity: f64,
     /// Weighted composite.
     pub score: f64,
 }
@@ -51,45 +53,50 @@ pub struct Weights {
     pub loot_protected: f64,
     pub balance: f64,
     pub perimeter_safety: f64,
+    /// Weight on walls forming continuous barriers rather than scattered tiles.
+    pub wall_integrity: f64,
 }
 
 impl Weights {
     /// War profile: the town hall and three stars are what matter.
     pub fn war() -> Weights {
         Weights {
-            coverage: 0.16,
-            covered_fraction: 0.20,
-            th_depth: 0.26,
-            enclosed: 0.14,
+            coverage: 0.14,
+            covered_fraction: 0.18,
+            th_depth: 0.23,
+            enclosed: 0.12,
             loot_protected: 0.04,
-            balance: 0.12,
-            perimeter_safety: 0.08,
+            balance: 0.10,
+            perimeter_safety: 0.07,
+            wall_integrity: 0.12,
         }
     }
 
     /// Farming profile: storages matter more than the town hall.
     pub fn farming() -> Weights {
         Weights {
-            coverage: 0.16,
-            covered_fraction: 0.18,
-            th_depth: 0.06,
-            enclosed: 0.16,
-            loot_protected: 0.28,
-            balance: 0.10,
-            perimeter_safety: 0.06,
+            coverage: 0.14,
+            covered_fraction: 0.16,
+            th_depth: 0.05,
+            enclosed: 0.14,
+            loot_protected: 0.26,
+            balance: 0.09,
+            perimeter_safety: 0.05,
+            wall_integrity: 0.11,
         }
     }
 
     /// Trophy profile: sits between the two.
     pub fn trophy() -> Weights {
         Weights {
-            coverage: 0.18,
-            covered_fraction: 0.20,
-            th_depth: 0.18,
-            enclosed: 0.16,
-            loot_protected: 0.12,
-            balance: 0.10,
-            perimeter_safety: 0.06,
+            coverage: 0.16,
+            covered_fraction: 0.18,
+            th_depth: 0.16,
+            enclosed: 0.14,
+            loot_protected: 0.11,
+            balance: 0.09,
+            perimeter_safety: 0.05,
+            wall_integrity: 0.11,
         }
     }
 
@@ -169,6 +176,45 @@ pub fn enclosed_map(layout: &Layout) -> Vec<bool> {
 }
 
 /// Scores a layout under a weighting profile.
+/// How much of the wall budget forms continuous barriers rather than litter.
+///
+/// A lone wall tile does nothing in this game. Troops walk around it; it
+/// encloses no compartment and delays nobody. Without this term the optimizer
+/// discovers that scattering walls raises `enclosed` — isolated tiles still
+/// interrupt the flood fill — and happily shreds a single connected lattice
+/// into a hundred loose blocks while reporting a better score. That is exactly
+/// what it was doing: TH15's wall network went from 1 component to 111.
+///
+/// Scored per tile by how many orthogonal wall neighbours it has. A tile with
+/// two or more — mid-run, or on a corner — scores 1; a run's loose end scores a
+/// quarter; an orphan scores nothing.
+///
+/// The curve is deliberately steep rather than linear. A gentle 0/0.5/1 ramp
+/// still left the low town halls shredded: with only 24 walls to spend, the
+/// integrity term is small in absolute size and the search happily traded it
+/// away for a fraction of a point of `enclosed`. Every tile of a properly
+/// closed lattice has two neighbours, so scoring the two-neighbour case at full
+/// marks costs a good layout nothing and makes litter expensive.
+pub fn wall_integrity(layout: &Layout) -> f64 {
+    if layout.walls.is_empty() {
+        return 1.0;
+    }
+    let set: std::collections::HashSet<(i32, i32)> = layout.walls.iter().copied().collect();
+    let mut sum = 0.0;
+    for &(x, y) in &layout.walls {
+        let n = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+            .iter()
+            .filter(|(dx, dy)| set.contains(&(x + dx, y + dy)))
+            .count();
+        sum += match n {
+            0 => 0.0,
+            1 => 0.25,
+            _ => 1.0,
+        };
+    }
+    sum / layout.walls.len() as f64
+}
+
 pub fn evaluate(layout: &Layout, w: &Weights) -> Metrics {
     let cov = coverage_map(layout);
     let enc = enclosed_map(layout);
@@ -266,13 +312,16 @@ pub fn evaluate(layout: &Layout, w: &Weights) -> Metrics {
         1.0 - exposed as f64 / structures.len() as f64
     };
 
+    let integrity = wall_integrity(layout);
+
     let score = w.coverage * coverage
         + w.covered_fraction * covered_fraction
         + w.th_depth * th_depth
         + w.enclosed * enclosed
         + w.loot_protected * loot_protected
         + w.balance * balance
-        + w.perimeter_safety * perimeter_safety;
+        + w.perimeter_safety * perimeter_safety
+        + w.wall_integrity * integrity;
 
     Metrics {
         coverage,
@@ -282,6 +331,7 @@ pub fn evaluate(layout: &Layout, w: &Weights) -> Metrics {
         loot_protected,
         balance,
         perimeter_safety,
+        wall_integrity: integrity,
         score,
     }
 }
@@ -393,9 +443,95 @@ mod tests {
             ("loot_protected", m.loot_protected),
             ("balance", m.balance),
             ("perimeter_safety", m.perimeter_safety),
+            ("wall_integrity", m.wall_integrity),
             ("score", m.score),
         ] {
             assert!((0.0..=1.0).contains(&v), "{n} out of range: {v}");
         }
+    }
+}
+
+#[cfg(test)]
+mod wall_integrity_tests {
+    use super::*;
+    use crate::grid::Layout;
+
+    #[test]
+    fn a_connected_run_scores_far_above_scattered_tiles() {
+        // The regression this metric exists for. The optimizer found that
+        // scattering a lattice raised `enclosed` — loose tiles still interrupt
+        // the flood fill — and shredded TH15's wall network from 1 component
+        // into 111 while reporting a better score.
+        let mut run = Layout::new(12);
+        for x in 10..30 {
+            run.walls.push((x, 10));
+        }
+        let mut scattered = Layout::new(12);
+        for k in 0..20 {
+            scattered.walls.push((10 + k * 2, 10 + (k % 3) * 2));
+        }
+        assert_eq!(run.walls.len(), scattered.walls.len());
+
+        let joined = wall_integrity(&run);
+        let litter = wall_integrity(&scattered);
+        assert!(joined > 0.9, "a straight run should score near 1, got {joined}");
+        assert_eq!(litter, 0.0, "isolated tiles defend nothing");
+        assert!(joined > litter);
+    }
+
+    #[test]
+    fn a_closed_box_scores_perfectly_and_ends_score_half() {
+        let mut box_ = Layout::new(12);
+        let mut seen = std::collections::HashSet::new();
+        for k in 0..=8 {
+            for p in [(10 + k, 10), (10 + k, 18), (10, 10 + k), (18, 10 + k)] {
+                if seen.insert(p) {
+                    box_.walls.push(p);
+                }
+            }
+        }
+        assert_eq!(wall_integrity(&box_), 1.0, "every tile of a ring has two neighbours");
+
+        // A three-tile stub: one middle tile scores 1, two ends a quarter each.
+        let mut stub = Layout::new(12);
+        for x in 10..13 {
+            stub.walls.push((x, 10));
+        }
+        // one middle tile at full marks, two loose ends at a quarter each
+        assert!((wall_integrity(&stub) - 1.5 / 3.0).abs() < 1e-9);
+    }
+
+    #[test]
+    fn a_base_with_no_walls_is_not_penalised() {
+        // TH1 has no wall allowance at all; scoring it zero would make every
+        // TH1 layout look broken.
+        assert_eq!(wall_integrity(&Layout::new(1)), 1.0);
+    }
+
+    #[test]
+    fn scattering_a_seeded_lattice_lowers_its_score() {
+        let Ok(d) = coc_data::GameData::load_default() else { return };
+        let l = crate::builder::seed(&d, 13, 42);
+        let joined = evaluate(&l, &Weights::war());
+        let mut broken = l.clone();
+        // Delete every other wall tile: the same trick the annealer found.
+        broken.walls = broken
+            .walls
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| i % 2 == 0)
+            .map(|(_, w)| *w)
+            .collect();
+        let after = evaluate(&broken, &Weights::war());
+        assert!(
+            after.wall_integrity < joined.wall_integrity,
+            "breaking the lattice must lower integrity"
+        );
+        assert!(
+            after.score < joined.score,
+            "a shredded lattice scored {:.4} against {:.4} intact",
+            after.score,
+            joined.score
+        );
     }
 }

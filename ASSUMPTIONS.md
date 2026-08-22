@@ -522,6 +522,82 @@ Replaced with a per-tier palette and a taller capped block. The palette is
 the artwork. The `Wall texture` toggle draws the real extracted sprites and is
 off by default, because it does not render acceptably on the owner's phone.
 
+### 3.5 `DATA` — The optimizer was shredding the walls it was given
+
+Found by counting connected components, after the layouts still looked wrong.
+
+The seeded lattice is a single connected wall network at every town hall. After
+annealing, TH15's was **111 separate pieces** and TH14's 107 — and the reported
+score had gone *up*. The optimizer had discovered that scattering walls raises
+`enclosed`, because the enclosure flood fill is interrupted by any wall tile
+whether or not it is joined to anything. A lone wall tile defends nothing in
+this game; troops walk around it.
+
+Two things were wrong and both are fixed:
+
+- **The metric had no term for it.** `metrics::wall_integrity` now scores each
+  wall tile by its orthogonal wall neighbours — two or more scores 1, a loose
+  end a quarter, an orphan nothing — weighted at 0.11–0.12 across the profiles.
+  The curve is deliberately steep: a gentle ramp still left the low town halls
+  shredded, because with 24 walls to spend the term is small in absolute size
+  and the search traded it away.
+
+- **The mutation could only ever do damage.** `nudge_wall` moved one wall tile
+  to a random adjacent square. There is no sequence of single-tile nudges that
+  builds a better lattice, so its entire reachable neighbourhood was worse than
+  where it started. Removed. Walls now come out of the optimizer exactly as the
+  builder laid them, and `coc-opt` has a test asserting that at TH3, 9, 15 and
+  17.
+
+Worst component count across all 18 town halls and both profiles is now 1.
+
+### 6.11 `DATA` — The shipped wall art cannot be tiled, and why
+
+Three approaches were tried against the real sprites before settling.
+
+The shipped wall art is a **shop icon**: an L-shaped corner, roughly two tiles
+wide, showing two wall arms meeting at a right angle. At level 18 it is not even
+an L — it is a free-standing tower.
+
+1. *Stamp the icon on every wall tile.* Overlapping corners pile up. This is
+   what shipped before and what the project owner reported as unusable.
+2. *Slice the icon down its middle and draw the matching arm per tile.* The
+   split point is the horizontal centre, not the topmost pixel — several levels
+   have a spike partway along one arm that put the split two-thirds across.
+   The arms then tile, but each one is not one tile long and stands about four
+   tiles tall, which buries the base.
+3. *Cap the height.* Squashes the art into unrecognisable blobs.
+
+So the geometry is procedural — it tiles exactly, sits a little over one tile
+high, and costs nothing on a phone — and the **colours are measured off
+Supercell's own sprites**: a cap band, a camera-facing band, and the saturated
+accent that averaging flattens out. Level 11 really does have a dark top over an
+orange face, and that is what the sampler reports. The darkest levels are lifted
+off pure black, because levels 8 and 9 are near-black stone and crush to a
+silhouette once the side faces are shaded down again.
+
+`APPROXIMATED`, and stated as such in the renderer: this is the real palette on
+correct geometry, not the real artwork.
+
+### 6.12 `DATA` — Two structures have no published art at any level
+
+The Multi Gear Tower is newer than the art host's catalogue (94 buildings, no
+gear tower at any slug tried), and the Skeleton Trap 404s under every slug the
+trap map gives, including its internal name `ghosttrap`. Tornado Trap art exists
+at level 1 only and is reused for all levels.
+
+They are drawn as capped blocks in their class colour, and the art counter in
+the renderer reports how many of a layout's structures are exact, near-level,
+or absent. At TH17 that is 82 exact, 70 near, 5 absent of 157.
+
+### 6.13 `DATA` — The canvas was four tiles too small on each axis
+
+`WORLD_W`/`WORLD_H` were computed from `BUILDABLE` (40) where the isometric
+diamond actually spans the whole playfield (44). Every base was clipped along
+its bottom edge with a band of dead space above it. The stage now also matches
+the world's own aspect ratio instead of a fixed 0.78, and a test asserts all
+four playfield corners land inside the canvas at fit zoom, at all 18 town halls.
+
 ---
 
 ## 4. Open questions

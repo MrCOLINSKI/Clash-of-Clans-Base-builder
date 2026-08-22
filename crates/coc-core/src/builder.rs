@@ -262,7 +262,12 @@ fn wall_lattice(budget: usize, needed: i32) -> (Vec<(i32, i32)>, Vec<Rect>, Rect
                 continue;
             }
             let cap = capacity(cell, lines);
-            if cap >= needed {
+            // The same headroom the subdivision pass uses. The capacity model
+            // counts 3x3s; the handful of 4x4s — town hall, Eagle Artillery,
+            // Hero Hall — each waste most of a compartment's remainder. Sizing
+            // to an exact fit left TH5 with four 6x6 rooms for a core that
+            // needed every tile of them, and six defences outside the walls.
+            if cap >= needed + needed / 6 {
                 // Among lattices that hold the core, take the **smallest cell**.
                 // Compartment size is the defensive variable: one Jump Spell
                 // into a 12-wide cell opens the base, where the same spell into
