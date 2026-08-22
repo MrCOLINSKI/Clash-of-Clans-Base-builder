@@ -216,6 +216,7 @@ canvas{display:block;width:100%;height:auto}
 <div class="chips" style="margin-top:14px">
   <label class="chip"><input type="checkbox" id="l-art" checked><span>Artwork</span></label>
   <label class="chip"><input type="checkbox" id="l-walls" checked><span>Walls</span></label>
+  <label class="chip"><input type="checkbox" id="l-walltex"><span>Wall texture</span></label>
   <label class="chip"><input type="checkbox" id="l-cov"><span>Coverage heat</span></label>
   <label class="chip"><input type="checkbox" id="l-range"><span>Defence ranges</span></label>
   <label class="chip"><input type="checkbox" id="l-lvl"><span>Level numbers</span></label>
@@ -335,7 +336,9 @@ function source(){
   const e = entry();
   if (view === "edit") return edit;
   const l = view === "opt" ? e.opt : e.seed;
-  return { b: l.b.map(unpack), w: l.w.map(t => t.slice()), wl: l.wl };
+  // wimg must be carried: dropping it here silently disabled every wall
+  // texture, because the renderer then had no image key to look up.
+  return { b: l.b.map(unpack), w: l.w.map(t => t.slice()), wl: l.wl, wimg: l.wimg };
 }
 
 /* ---------- projection ---------- */
@@ -517,7 +520,8 @@ function draw(){
   if(on("l-walls")){
     const f=L.wl?(L.wl-1)/18:0;
     const top=mix("#cdd3db","#31353c",f*.7), side=mix("#9aa2ad","#1e2126",f*.7);
-    const wi=L.wimg && IMG[L.wimg] && IMG[L.wimg].complete && IMG[L.wimg].naturalWidth ? L.wimg : null;
+    const wi=on("l-walltex") && L.wimg && IMG[L.wimg] && IMG[L.wimg].complete
+      && IMG[L.wimg].naturalWidth ? L.wimg : null;
     for(const [x,y] of L.w) items.push({d:x+y+2, wall:[x,y,top,side,wi]});
   }
   L.b.forEach((p,i)=>items.push({d:p.x+p.y+p.w+p.h, p, i}));
@@ -662,9 +666,9 @@ function allowance(){
 }
 function startEdit(from){
   const e=entry();
-  if(from==="empty") edit={b:[], w:e.opt.w.map(t=>t.slice()), wl:e.opt.wl};
-  else if(from==="clear") edit={b:[], w:[], wl:e.opt.wl};
-  else edit={b:e.opt.b.map(unpack), w:e.opt.w.map(t=>t.slice()), wl:e.opt.wl};
+  if(from==="empty") edit={b:[], w:e.opt.w.map(t=>t.slice()), wl:e.opt.wl, wimg:e.opt.wimg};
+  else if(from==="clear") edit={b:[], w:[], wl:e.opt.wl, wimg:e.opt.wimg};
+  else edit={b:e.opt.b.map(unpack), w:e.opt.w.map(t=>t.slice()), wl:e.opt.wl, wimg:e.opt.wimg};
   selected=-1; placing=null;
   paintPalette(); editScore(); draw(); stats();
 }
@@ -876,7 +880,7 @@ document.getElementById("v-seed").addEventListener("change",()=>setView("seed"))
 document.getElementById("v-edit").addEventListener("change",()=>setView("edit"));
 document.getElementById("p-war").addEventListener("change",()=>{profile="war";edit=null;if(view==="edit")startEdit("tuned");draw();mtable();stats();});
 document.getElementById("p-farm").addEventListener("change",()=>{profile="farm";edit=null;if(view==="edit")startEdit("tuned");draw();mtable();stats();});
-for(const id of ["l-art","l-walls","l-cov","l-range","l-lvl"])
+for(const id of ["l-art","l-walls","l-walltex","l-cov","l-range","l-lvl"])
   document.getElementById(id).addEventListener("change",draw);
 const sizeEl=document.getElementById("art-size"), sizeOut=document.getElementById("art-size-out");
 sizeEl.addEventListener("input",()=>{
