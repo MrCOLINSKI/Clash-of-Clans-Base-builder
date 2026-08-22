@@ -430,9 +430,41 @@ ZSTD frame after the metadata means compressed, its absence means raw. If a
 future format adds a third mode this fails loudly on the length check rather
 than producing garbage.
 
-### 6.7 `ASSUMED` — Sprite-to-building mapping is by footprint, for now
+### 6.7 `UNVERIFIED` — Sprite-to-building mapping is not solved
 
-Confidence: low, and visible in the preview.
+Confidence: none. Assigning sprites by footprint was tried and **withdrawn**:
+at TH4 it drew a max-level X-Bow where a level-2 Mortar belonged. Real art in
+the wrong place is worse than an honest diagram, because it looks authoritative
+while being wrong, so the renderer now draws footprints and levels instead.
+
+How far the chain is mapped:
+
+| Step | State |
+|---|---|
+| Building → per-level sprite name (`buildings.csv` `ExportName`) | done — a TH4 Cannon is `basic_turret_lvl5` |
+| Sprite name present in `buildings.sc` | done — 4-byte length-prefixed UTF-8 strings |
+| Name → adjacent record | done — a FlatBuffers table with two fields, an id and a type |
+| id → movie clip → shape → texture rectangle | **missing** |
+
+SC v6 is FlatBuffers with an unpublished schema, so the last hop has to be
+mapped hop by hop against real files. Texture decoding itself is finished and
+correct; this is purely about knowing which rectangle belongs to which
+building.
+
+### 6.10 `DATA` — Per-level appearance and stats are fully available
+
+Each level row in `buildings.csv` carries its own `TownHallLevel` requirement
+**and** its own `ExportName`. So the max level at a given town hall is the
+highest level whose requirement that hall meets — the same rule the game uses —
+and each level names its own sprite:
+
+| Town hall | Cannon | Archer Tower | Wall | Mortar |
+|---|---|---|---|---|
+| TH4 | lvl 5 | lvl 4 | lvl 4 (75) | lvl 2 |
+| TH12 | lvl 17 | — | lvl 13 (300) | — |
+
+This is why a preview that shows every town hall with the same artwork is
+wrong on its own terms, quite apart from sprite identity.
 
 Individual sprites are recovered by flood-filling opaque regions of an atlas,
 which works because sprites are packed with transparent gutters. What that does
