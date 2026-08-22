@@ -58,8 +58,27 @@ fn highest(levels: impl Iterator<Item = (u32, u32)>, th: u32) -> Option<u32> {
     best
 }
 
-/// Builds a legal, seeded layout for a town hall level.
+/// How the walls are arranged.
+///
+/// Until now every base at every town hall got the same uniform grid, which is
+/// why they all looked like the same base with the furniture moved. These are
+/// the two structures current design writing actually describes.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Plan {
+    /// A uniform grid of compartments.
+    Lattice,
+    /// A core box for the Town Hall, ringed by eight compartments. Troops walk
+    /// the ring rather than driving straight in, which is the shape reported to
+    /// hold spam attacks to one star.
+    Ring,
+}
+
+/// Builds a legal, seeded layout for a town hall level, with the grid plan.
 pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
+    seed_with(data, th, seed, Plan::Lattice)
+}
+
+pub fn seed_with(data: &GameData, th: u32, seed: u64, plan: Plan) -> Layout {
     let mut rng = ChaCha8Rng::seed_from_u64(seed);
     let mut layout = Layout::new(th);
     let mut occ = vec![0u8; (TOTAL * TOTAL) as usize];
@@ -112,7 +131,11 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
             }
         })
         .sum();
-    let (walls, cells, box_) = wall_lattice(wall_budget, core_area);
+    let (walls, cells, box_) = match plan {
+        Plan::Lattice => wall_lattice(wall_budget, core_area),
+        Plan::Ring => ring_lattice(wall_budget, core_area)
+            .unwrap_or_else(|| wall_lattice(wall_budget, core_area)),
+    };
     // What each compartment already holds, so same-type defences can be split
     // across rooms rather than stacked in one.
     let mut held: Vec<std::collections::HashMap<String, usize>> =
@@ -365,7 +388,7 @@ fn place_in_cells(
 /// The previous version maximised interior area instead, which is why bases
 /// came out with 784 tiles of compartment for 1004 tiles of structure: a third
 /// of the base spilled outside and the compartments filled with collectors.
-fn wall_lattice(budget: usize, needed: i32) -> (Vec<(i32, i32)>, Vec<Rect>, Rect) {
+fn wall_lattice(budget: usize, needed: i32) -> Grid {
     let whole = Rect::new(ORIGIN, ORIGIN, BUILDABLE, BUILDABLE);
     if budget < 24 {
         return (Vec::new(), vec![whole], Rect::new(ORIGIN, ORIGIN, 0, 0));
@@ -539,6 +562,91 @@ fn grid_capacity(xs: &[i32], ys: &[i32]) -> i32 {
 /// Index of the widest interval in a sorted line list.
 fn widest_gap(v: &[i32]) -> Option<usize> {
     (0..v.len().checked_sub(1)?).max_by_key(|&i| (v[i + 1] - v[i], std::cmp::Reverse(i)))
+}
+
+/// Walls, the compartments between them, and the plan's bounding box.
+type Grid = (Vec<(i32, i32)>, Vec<Rect>, Rect);
+
+/// A core box ringed by eight compartments.
+///
+/// Three nested squares would leave L-shaped rooms, which cannot be expressed as
+/// the rectangles the placer works in. Extending the **inner** square's four
+/// sides outward to the outer square instead divides the annulus exactly into
+/// four side bands and four corners — eight rectangles, no remainder — with the
+/// Town Hall's box in the middle.
+///
+/// Returns `None` when the budget cannot buy a ring that holds the core, so the
+/// caller falls back to the grid rather than emitting a broken base.
+fn ring_lattice(budget: usize, needed: i32) -> Option<Grid> {
+    let centre = ORIGIN + BUILDABLE / 2;
+    let mut best: Option<(i32, i32, i32)> = None;
+
+    // `i` is the core's half-width, `m` the outer square's.
+    for i in 3..=6i32 {
+        for m in i + 4..=BUILDABLE / 2 - 1 {
+            let cost = 8 * i + 8 * m + 4 * (m - i - 1);
+            if cost as usize > budget {
+                continue;
+            }
+            let band = m - i - 1; // depth of a side band
+            let core = 2 * i - 1;
+            let per = |w: i32, h: i32| 9 * (w / 3) * (h / 3);
+            let cap = per(core, core)                 // the core box
+                + 2 * per(core, band)                 // north and south bands
+                + 2 * per(band, core)                 // west and east bands
+                + 4 * per(band, band);                // the four corners
+            if cap >= needed + needed / 4 && best.is_none_or(|(_, _, c)| cap < c) {
+                best = Some((i, m, cap));
+            }
+        }
+    }
+    let (i, m, _) = best?;
+
+    let mut walls = Vec::new();
+    let mut seen = std::collections::HashSet::new();
+    let mut put = |x: i32, y: i32, walls: &mut Vec<(i32, i32)>| {
+        if seen.insert((x, y)) {
+            walls.push((x, y));
+        }
+    };
+    // The two square perimeters.
+    for r in [i, m] {
+        for t in -r..=r {
+            put(centre + t, centre - r, &mut walls);
+            put(centre + t, centre + r, &mut walls);
+            put(centre - r, centre + t, &mut walls);
+            put(centre + r, centre + t, &mut walls);
+        }
+    }
+    // The inner square's sides, extended outward to the outer square.
+    for t in i + 1..m {
+        put(centre - i, centre - t, &mut walls);
+        put(centre + i, centre - t, &mut walls);
+        put(centre - i, centre + t, &mut walls);
+        put(centre + i, centre + t, &mut walls);
+        put(centre - t, centre - i, &mut walls);
+        put(centre - t, centre + i, &mut walls);
+        put(centre + t, centre - i, &mut walls);
+        put(centre + t, centre + i, &mut walls);
+    }
+
+    let band = m - i - 1;
+    let core = 2 * i - 1;
+    let (lo, hi) = (centre - i + 1, centre + i + 1);
+    let outer = centre - m + 1;
+    let cells = vec![
+        Rect::new(lo, lo, core, core),           // core: the Town Hall's box
+        Rect::new(lo, outer, core, band),        // north band
+        Rect::new(lo, hi, core, band),           // south
+        Rect::new(outer, lo, band, core),        // west
+        Rect::new(hi, lo, band, core),           // east
+        Rect::new(outer, outer, band, band),     // corners
+        Rect::new(hi, outer, band, band),
+        Rect::new(outer, hi, band, band),
+        Rect::new(hi, hi, band, band),
+    ];
+    let box_ = Rect::new(centre - m, centre - m, 2 * m + 1, 2 * m + 1);
+    Some((walls, cells, box_))
 }
 
 /// Places a structure outside the wall lattice, keeping a tile of air where it
@@ -975,5 +1083,45 @@ mod tests {
         assert_eq!(level_for(&d, "Wall", 4), Some(4));
         assert_eq!(level_for(&d, "X-Bow", 4), None);
         assert_eq!(level_for(&d, "Cannon", 12), Some(17));
+    }
+}
+
+#[cfg(test)]
+mod plan_tests {
+    use super::*;
+
+    #[test]
+    fn the_ring_plan_is_a_different_base_where_the_budget_allows_one() {
+        // Until this existed, every town hall got the same uniform grid, so the
+        // layouts looked unchanged however much the placement rules moved the
+        // furniture inside them.
+        let Ok(d) = GameData::load_default() else { return };
+        for th in 7..=d.max_townhall() {
+            let grid = seed_with(&d, th, 0xC0FFEE, Plan::Lattice);
+            let ring = seed_with(&d, th, 0xC0FFEE, Plan::Ring);
+            assert_ne!(grid.walls, ring.walls, "TH{th}: the ring fell back to the grid");
+            assert!(
+                crate::legality::validate(&ring, &d).is_empty(),
+                "TH{th}: the ring layout is illegal"
+            );
+            let hall = ring.town_hall().expect("ring layout has a town hall");
+            let c = TOTAL / 2;
+            let off = (hall.rect.x + hall.rect.w / 2 - c)
+                .abs()
+                .max((hall.rect.y + hall.rect.h / 2 - c).abs());
+            assert!(off <= 4, "TH{th}: the ring's hall sits {off} tiles off centre");
+        }
+    }
+
+    #[test]
+    fn a_wall_budget_too_small_for_a_ring_falls_back_rather_than_breaking() {
+        // TH1-6 cannot buy a ring that holds the core. Falling back to the grid
+        // is correct; emitting a broken ring is not.
+        let Ok(d) = GameData::load_default() else { return };
+        for th in 1..=6 {
+            let grid = seed_with(&d, th, 0xC0FFEE, Plan::Lattice);
+            let ring = seed_with(&d, th, 0xC0FFEE, Plan::Ring);
+            assert_eq!(grid.walls, ring.walls, "TH{th} should fall back to the grid");
+        }
     }
 }

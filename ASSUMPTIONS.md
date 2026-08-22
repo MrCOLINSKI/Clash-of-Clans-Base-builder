@@ -778,6 +778,49 @@ the sources that is the shape Fireball Super Yetis are reported to handle well
 and Root Riders are not. That is the honest statement available: the shape is
 measured, the consequence is quoted.
 
+### 3.11 `DATA` — Every base had the same architecture
+
+Reported as "the base layouts haven't been changed", and the layouts *had*
+changed — 15 of 18 differed at the last regeneration, and the payload carried
+them. The complaint was still right, about something the diff does not show:
+every town hall, at every profile, got the same uniform grid of compartments.
+Moving the furniture inside it does not make it a different base.
+
+`builder::Plan` now offers two:
+
+| Plan | Shape |
+|---|---|
+| `Lattice` | A uniform grid of compartments. |
+| `Ring` | A core box for the Town Hall, ringed by eight compartments. |
+
+Three nested squares would leave L-shaped rooms, which cannot be expressed as
+the rectangles the placer works in. Extending the **inner** square's four sides
+outward to the outer square divides the annulus exactly into four side bands and
+four corners — eight rectangles, no remainder.
+
+The ring costs more wall per unit of enclosed area, so below TH7 the budget
+cannot buy one that holds the core. There it falls back to the grid rather than
+emitting a broken ring, and a test asserts both halves of that: different walls
+from TH7 up, identical walls at TH1-6.
+
+Measured, the ring is a genuinely different shape rather than a reskin —
+compactness 0.73-0.85 against the grid's 0.56-0.68 — and the sources describe
+ring bases as the ones that hold spam attacks to one star.
+
+Four layout sets now ship: war and farming, each as grid and ring.
+
+### 6.16 `DATA` — Wall sprites must scale with the portraits
+
+The wall artwork was drawn at a flat tile width while building portraits shrank
+to fit the base (ASSUMPTIONS 3.6). At TH13 that is 1.02 tiles against the
+portraits' 0.62 — every wall about 1.6x oversized, blocks swallowing their
+neighbours, the compartments reading as one lumpy mass. Reported as "wall
+textures look off", and it was scale, not texture.
+
+Walls now take `artScale` like everything else, with a 1.12 factor because wall
+art carries less padding than a building portrait does and needs slightly more
+of its tile to sit at the same visual size.
+
 ---
 
 ## 4. Open questions

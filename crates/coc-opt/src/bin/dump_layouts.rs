@@ -6,6 +6,7 @@
 //! the builder changes, instead of being reconstructed from memory.
 
 use anyhow::{bail, Result};
+use coc_core::builder::Plan;
 use coc_core::{builder, metrics, Layout, Weights};
 use coc_data::GameData;
 use coc_opt::{anneal, Config, Geometric};
@@ -15,6 +16,11 @@ fn main() -> Result<()> {
     let args: Vec<String> = std::env::args().collect();
     let profile = args.get(1).map(String::as_str).unwrap_or("war");
     let out = args.get(2).map(String::as_str).unwrap_or("layouts.json");
+    let plan = match args.get(3).map(String::as_str).unwrap_or("lattice") {
+        "ring" => Plan::Ring,
+        "lattice" => Plan::Lattice,
+        other => bail!("unknown plan {other}; expected lattice or ring"),
+    };
     let weights = match profile {
         "war" => Weights::war(),
         "farming" | "farm" => Weights::farming(),
@@ -26,7 +32,7 @@ fn main() -> Result<()> {
 
     let mut halls = serde_json::Map::new();
     for th in 1..=data.max_townhall() {
-        let seed = builder::seed(&data, th, 0xC0FFEE);
+        let seed = builder::seed_with(&data, th, 0xC0FFEE, plan);
         let seed_metrics = metrics::evaluate(&seed, &weights);
         let outcome = anneal(&seed, &obj, Config { seed: 0xC0FFEE, ..Config::default() });
 
@@ -56,6 +62,7 @@ fn main() -> Result<()> {
 
     let doc = json!({
         "profile": profile,
+        "plan": args.get(3).map(String::as_str).unwrap_or("lattice"),
         "fingerprint": &data.provenance.fingerprint[..12],
         "calibrated": false,
         "note": "Geometric proxy metrics only. The simulator is uncalibrated; \
