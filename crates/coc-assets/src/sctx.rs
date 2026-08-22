@@ -151,7 +151,7 @@ impl Sctx {
     /// void-extent block is present, which every texture with transparent
     /// margin has.
     pub fn looks_like_astc(&self) -> bool {
-        if self.payload.is_empty() || !self.payload.len().is_multiple_of(ASTC_BLOCK_BYTES) {
+        if self.payload.is_empty() || self.payload.len() % ASTC_BLOCK_BYTES != 0 {
             return false;
         }
         self.payload
@@ -176,7 +176,7 @@ impl Sctx {
             if bw * bw > blocks {
                 break;
             }
-            if !blocks.is_multiple_of(bw) {
+            if blocks % bw != 0 {
                 continue;
             }
             let bh = blocks / bw;

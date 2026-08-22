@@ -106,6 +106,16 @@ pub struct PathingGlobals {
     pub underground_speed_percent: i64,
     /// `USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION`.
     pub heat_map_attack_position: bool,
+    /// `WALL_BREAKER_SMART_RADIUS` — search radius, in game distance units,
+    /// within which a Wall Breaker looks for a wall worth breaking.
+    pub wall_breaker_smart_radius: i64,
+    /// `WALL_BREAKER_SMART_CNT_LIMIT` — how many walls that search examines.
+    pub wall_breaker_smart_cnt_limit: i64,
+    /// `WALL_BREAKER_SMART_RETARGET_LIMIT` — distance beyond which a Wall
+    /// Breaker gives up its current wall and looks again.
+    pub wall_breaker_smart_retarget_limit: i64,
+    /// `WALL_BREAKER_USE_ROOMS` — whether the search is compartment-aware.
+    pub wall_breaker_use_rooms: bool,
 }
 
 impl PathingGlobals {
@@ -130,6 +140,10 @@ impl PathingGlobals {
             use_wall_weights_for_jump_spell: boolean("USE_WALL_WEIGHTS_FOR_JUMP_SPELL")?,
             underground_speed_percent: num("UNDERGROUND_UNIT_GROUND_SPEED_PERCENTAGE")?,
             heat_map_attack_position: boolean("USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION")?,
+            wall_breaker_smart_radius: num("WALL_BREAKER_SMART_RADIUS")?,
+            wall_breaker_smart_cnt_limit: num("WALL_BREAKER_SMART_CNT_LIMIT")?,
+            wall_breaker_smart_retarget_limit: num("WALL_BREAKER_SMART_RETARGET_LIMIT")?,
+            wall_breaker_use_rooms: boolean("WALL_BREAKER_USE_ROOMS")?,
         })
     }
 
@@ -731,6 +745,10 @@ mod tests {
             use_wall_weights_for_jump_spell: true,
             underground_speed_percent: 70,
             heat_map_attack_position: true,
+            wall_breaker_smart_radius: 2500,
+            wall_breaker_smart_cnt_limit: 30,
+            wall_breaker_smart_retarget_limit: 2000,
+            wall_breaker_use_rooms: false,
         };
         let mut c = Character {
             name: "T".into(),

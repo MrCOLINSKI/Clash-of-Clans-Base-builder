@@ -6,6 +6,12 @@ rust-version.workspace = true
 license.workspace = true
 
 [dependencies]
+coc-core.workspace = true
+coc-data.workspace = true
+anyhow.workspace = true
+serde.workspace = true
+toml.workspace = true
+thiserror.workspace = true
 
 [lints]
 workspace = true

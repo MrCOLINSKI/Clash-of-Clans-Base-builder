@@ -4,7 +4,7 @@
 //! emit an illegal base, so every mutation is checked here rather than trusted.
 //! A violation is a bug in the mutation, not a candidate to be scored badly.
 
-use crate::grid::{Layout, Placement, Rect, BUILDABLE, ORIGIN};
+use crate::grid::{Layout, Rect, BUILDABLE, ORIGIN};
 use coc_data::GameData;
 use std::collections::HashMap;
 
@@ -178,7 +178,7 @@ pub fn is_legal(layout: &Layout, data: &GameData) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::grid::Rect;
+    use crate::grid::{Placement, Rect};
 
     fn place(name: &str, x: i32, y: i32, w: i32, h: i32) -> Placement {
         Placement {

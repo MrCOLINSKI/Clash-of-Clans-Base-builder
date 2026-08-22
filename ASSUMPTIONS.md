@@ -300,6 +300,73 @@ this version's data: it causes *removal*. Modelled as `removes_victims()` and
 `causes_displacement()` separately, with `immune_by_housing()` for the housing
 thresholds that decide who is too heavy to be affected.
 
+### 2.9 `ASSUMED` — Wall cost is charged once per wall *tile*
+
+Confidence: high that this is the only defensible choice; no data source.
+
+Nothing shipped states how the wall penalty interacts with a navigation grid
+finer than one tile, because the grid resolution is a property of this
+implementation, not of the game. Charging on every wall *cell* entered would
+make one wall cost `subtiles_per_tile` times too much, and — worse — would make
+the game's balance depend on a configuration knob: doubling the nav resolution
+would double the effective cost of every wall in the game.
+
+So the cost is charged when a step enters a wall cell belonging to a different
+tile than the cell it came from. One wall tile is charged once; a double layer
+is charged twice, which is what a double layer should cost. `path.rs` has a
+regression test (`wall_cost_does_not_depend_on_grid_resolution`) that runs the
+same crossing at two resolutions and requires the paid difference to be equal.
+
+### 2.10 `ASSUMED` — Diagonal steps may not cut corners
+
+Confidence: medium. No shipped constant describes it and it is not observable
+from the data.
+
+A diagonal step between two nav cells is permitted only when both of its
+orthogonal neighbours are passable. Without the rule, a unit slips through the
+zero-width gap where two buildings meet corner to corner, which would make
+"corner-to-corner" a free channel through any base and would reward a layout
+style that does not work in the real game.
+
+The alternative — allowing corner cuts — is a one-line change in
+`path::cost_field` and is a candidate for the phase 5 calibration harness to
+test against real replays.
+
+### 2.11 `ASSUMED` — `MAX_TARGET_LIST_SIZE` is used for unreachable candidates
+
+Confidence: low on the trigger, high that *some* widening is needed.
+
+§4.1 records that the condition under which the client grows the candidate list
+from 3 to 6 is unidentified. This project grows it on one condition only: when
+every candidate in the current list turns out to be unreachable at any cost.
+Without some such rule a unit sealed away from its three nearest targets simply
+stops, which is certainly not what the client does.
+
+This is a *floor*, not a claim to have found the trigger. There may be others,
+and if there are, this simulator does not reproduce them.
+
+### 2.12 `ASSUMED` — Burrowing units path in a straight line
+
+Confidence: medium.
+
+`IsUnderground` units (the Miner and its variants) tunnel, and tunnelling
+ignores walls. Whether it also ignores *buildings* is not stated anywhere in the
+data. Modelled as ignoring both, i.e. identically to a flier except for the
+extracted `UNDERGROUND_UNIT_GROUND_SPEED_PERCENTAGE = 70` speed penalty, on the
+grounds that a Miner visibly surfaces inside compartments no ground unit could
+walk into.
+
+### 2.13 `ASSUMED` — A stated target preference is a preference, not a filter
+
+Confidence: high; behavioural, not from data.
+
+A Giant whose preferred class has been wiped out keeps attacking rather than
+standing still. Implemented as: filter to the preferred class; if that leaves
+nothing, fall back to every structure. Nothing in `characters.csv` states this —
+the column simply names a class — but the alternative reading (a hard filter)
+would leave Giants idle at the end of every successful attack, which is not what
+happens.
+
 ---
 
 ## 3. Grid and layout
@@ -335,6 +402,8 @@ Unresolved. Listed so they are not quietly forgotten.
 1. **`MAX_TARGET_LIST_SIZE = 6`** — under what condition does the client grow
    the target list beyond `TARGET_LIST_SIZE = 3`? If there is a trigger, the
    two-stage selection has a mode this project does not yet reproduce.
+   *Partially addressed in §2.11*: the list is grown when every candidate is
+   unreachable. That is a necessary condition, not the identified one.
 2. **`USE_HEAT_MAP_IN_ATTACK_POSITION_SELECTION = TRUE`** — the real client
    picks ranged attack positions with a heat map. The brief's "nearest
    reachable subtile in range" is an approximation of unknown fidelity.
@@ -595,3 +664,24 @@ the warning is printed on every run and is not suppressible.
 
 Calibration is Phase 5 and must complete before any optimizer output is
 treated as meaningful.
+
+Phase 3 (pathfinding and targeting) is complete and self-consistent, which is
+not the same thing as being right. What it does guarantee:
+
+- Every constant it uses comes from `globals.csv` or `config/pathing.toml`;
+  `tests/pathing.rs::no_pathing_constant_is_written_in_rust_source` fails if the
+  config drifts from the shipped data.
+- The two-stage selection reproduces the rule-of-3 behaviour it is supposed to,
+  including the case where a troop walks past a defence it is standing beside.
+- Costs are integral end to end, and repeated runs on identical inputs produce
+  identical paths and targets.
+
+What it does not guarantee is that a real Giant would make the same choice. The
+open items in §4, and §2.9 through §2.13, are exactly the knobs the calibration
+harness will need to fit.
+
+Measured, for regression reference: a 250-unit mass retarget on a full TH17
+base takes ~190 ms in release (~0.75 ms per unit) on the development machine.
+That is acceptable for a once-per-Jump-Spell event and would not be acceptable
+per tick; if retargeting ever becomes continuous, the cost field will need to be
+shared between units rather than recomputed per unit.

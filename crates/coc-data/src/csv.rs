@@ -257,13 +257,13 @@ impl Table {
             };
 
             let mut cells: Vec<Option<String>> = Vec::with_capacity(width);
-            for col in 0..width {
+            for (col, held) in carry.iter_mut().enumerate().take(width) {
                 let raw_cell = raw.get(col).map(|c| c.trim()).unwrap_or("");
                 if raw_cell.is_empty() {
                     // Blank: inherit whatever this column last held in-block.
-                    cells.push(carry[col].clone());
+                    cells.push(held.clone());
                 } else {
-                    carry[col] = Some(raw_cell.to_string());
+                    *held = Some(raw_cell.to_string());
                     cells.push(Some(raw_cell.to_string()));
                 }
             }
