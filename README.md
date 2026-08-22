@@ -21,6 +21,7 @@ tests pass.
 | 6 | `coc-meta` — attack strategies | not started |
 | 7 | `coc-opt` — GA / annealing | not started |
 | 8 | `coc-render` + CLI | not started |
+| — | `coc-assets` — art container decoders (parallel track) | containers parsed, 26 tests green |
 
 ## Data
 
@@ -52,6 +53,21 @@ Notably, two things the brief treated as assumptions turned out to be **shipped
 in the game data**: the rule-of-N candidate count (`TARGET_LIST_SIZE = 3`) and
 the wall traversal cost (`WALL_COST_BASE = 1000`). The latter conflicts with
 the specified value; see `ASSUMPTIONS.md` §2.2.
+
+## Art extraction
+
+Running in parallel with the simulator. `coc-assets` decodes the three shipped
+art containers; see `docs/ART_FORMATS.md`.
+
+Clash is a 3D game: of 9,075 shipped files, 3,079 are `.glb` models and 1,833
+are `.sctx` texture atlases, against only 60 plain `.png`. Matching the game
+1:1 means importing models, not blitting sprites.
+
+Container parsing is done and verified against real files. The remaining work
+is schema mapping: the `.glb` descriptor chunk is FlatBuffers typed `FLA2`
+rather than the spec's `JSON`, and `.sctx` image dimensions must be read
+through the FlatBuffers vtable rather than a fixed offset. Neither is guessed
+— see `ASSUMPTIONS.md` §6.
 
 ## Layout links
 

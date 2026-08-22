@@ -334,6 +334,85 @@ Unresolved. Listed so they are not quietly forgotten.
 
 ---
 
+## 6. Art containers
+
+Added when 1:1 art extraction was brought into scope. Full notes in
+`docs/ART_FORMATS.md`.
+
+### 6.1 `DATA` — Clash is a 3D game; there are almost no sprite sheets
+
+Of 9,075 shipped files, 3,079 are `.glb` 3D models and 1,833 are `.sctx`
+texture atlases. Only **60** are plain `.png`, and those are UI and effect
+bitmaps. Building and troop art is 3D geometry under `sc3d/`.
+
+Any plan that assumed top-down sprites for buildings is wrong: matching the
+game 1:1 means importing models, not blitting images.
+
+### 6.2 `DATA` — `.glb` is glTF 2.0 with a non-standard descriptor chunk
+
+The container is spec-compliant and the `BIN` chunk is ordinary glTF payload.
+The descriptor chunk is typed **`FLA2`** and holds FlatBuffers where the
+specification requires `JSON`. Verified: the chunk parses as a valid
+FlatBuffers root table, and its strings include `SC_odin_format`, `bounds`,
+`parent`, and skeleton joint names.
+
+Consequence: every off-the-shelf glTF loader rejects these files. This is the
+whole reason art import is a reverse-engineering project.
+
+### 6.3 `DATA` — `.sctx` is ZSTD-compressed ASTC
+
+Magic at offset 8 (not 0), FlatBuffers metadata, then a ZSTD frame. The
+decompressed payload is a flat array of 16-byte blocks beginning
+`fc fd ff ff …`; `0xFC` is the ASTC void-extent signature. The declared
+decompressed length matched the actual size exactly on both samples tested
+(618,240 and 3,982,080 bytes).
+
+### 6.4 `UNVERIFIED` — SCTX image dimensions
+
+**Deliberately left unresolved rather than guessed.**
+
+Reading a `u16` pair at offset 40 looks right and even validates on one file:
+`chr_cannon_mortar_cart_0.sctx` reads 2928 x 1360, and that product is exactly
+its payload size. On `chr_cannon_cart_0.sctx` the same offset gives 1008, and
+618,240 / 1008 is not an integer; that payload factors as 672 x 920 instead.
+
+The offset cannot be stable, because the metadata is FlatBuffers: an omitted
+field is absent from the vtable and shifts everything after it. Dimensions
+must be read through the vtable, and the field index is not yet established
+across enough files.
+
+`dimension_candidates()` returns every pair consistent with the payload size
+rather than choosing one, and a test asserts the answer stays ambiguous, so
+that collapsing to a single candidate registers as a real finding instead of
+passing quietly.
+
+This is the pattern the whole project is meant to avoid: a constant that works
+on the first sample and is wrong everywhere else.
+
+### 6.5 `ASSUMED` — ASTC block footprint is 4x4
+
+Confidence: low. Used only to enumerate dimension candidates, never to decode.
+
+16-byte blocks are consistent with every ASTC footprint, so block size does
+not identify it. 4x4 is the most common choice for sprite atlases. Nothing
+depends on this being right yet.
+
+### 6.6 `DATA` — `.sc` is version 6, little-endian
+
+An initial big-endian reading gave 100663296 instead of 6 and was caught by a
+test against a real file. Only the header is parsed; the record stream is
+unmapped.
+
+### 6.7 Redistribution of extracted art
+
+Committing decoded art to a public repository redistributes Supercell's
+copyrighted assets, which is a materially different proposition from the
+balance CSVs. This was raised and the project owner directed that assets be
+committed. Recorded here as a decision made with the tradeoff stated, not as
+an oversight.
+
+---
+
 ## 5. Simulator status
 
 **The simulator is UNCALIBRATED.** No fixture of a real observed attack has
