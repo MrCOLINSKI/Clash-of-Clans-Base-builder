@@ -84,6 +84,12 @@ pub struct Placement {
     pub min_range: i32,
     /// True for traps, which occupy a tile but are not destructible.
     pub is_trap: bool,
+    /// Whether this defence can shoot air units.
+    #[serde(default)]
+    pub air_targets: bool,
+    /// Whether this defence can shoot ground units.
+    #[serde(default)]
+    pub ground_targets: bool,
 }
 
 impl Placement {

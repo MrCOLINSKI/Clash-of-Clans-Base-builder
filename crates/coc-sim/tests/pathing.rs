@@ -419,5 +419,7 @@ fn defence(name: &str, x: i32, y: i32) -> Placement {
         range: 900,
         min_range: 0,
         is_trap: false,
+        air_targets: true,
+        ground_targets: true,
     }
 }

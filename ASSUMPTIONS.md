@@ -737,6 +737,41 @@ remained. And spreading deliberately leaves awkward gaps, so the lattice takes a
 quarter more headroom than the raw core area rather than a sixth — without it,
 eight defences were pushed outside the walls at TH14.
 
+### 3.10 `DATA` — The attack meta is transcribed, and kept separate from what is measured
+
+`data/meta/attacks.json` holds 19 attacks, 5 base archetypes and a per-town-hall
+list, each entry carrying the source it came from. Nine sources, all cited in
+the file and shown in the renderer.
+
+It is **transcribed, not simulated**. Every claim in it is something players
+publish; none of it was tested here, and the file says so in its own `note`
+field. Keeping it in a data file rather than in code is deliberate: the meta
+turns over every few months and the layout generator must not quietly encode a
+2026 opinion as a permanent rule.
+
+One claim in the sources is a property of a base's *shape* rather than of how an
+attack runs, so a layout can be checked against it:
+
+> Root Riders excel against **spread** bases; Fireball Super Yetis handle
+> **compact, stacked cores** better.
+
+`metrics::exposure` measures that. Air cover and ground cover are the fraction of
+the buildable area inside range of at least one air-targeting or ground-targeting
+defence — which needed `air_targets` / `ground_targets` on `Placement`, read from
+the shipped data and wanted by the defender targeting in phase 4 anyway.
+
+Compactness is mean defensive radius over maximum defensive radius, normalised
+against the **base's own extent**, not the map's. Against the map every high town
+hall read "spread" for the uninteresting reason that 60 defences have to fill the
+space; the contrast the sources draw is about shape. Defences spread evenly
+through a disc give a ratio of 2/3, a hollow ring approaches 1, a clustered core
+is small.
+
+Measured, every generated base from TH6 up is a **compact core** (0.56-0.83). By
+the sources that is the shape Fireball Super Yetis are reported to handle well
+and Root Riders are not. That is the honest statement available: the shape is
+measured, the consequence is quoted.
+
 ---
 
 ## 4. Open questions

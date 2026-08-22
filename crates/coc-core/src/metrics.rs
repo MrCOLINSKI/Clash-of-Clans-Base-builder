@@ -195,6 +195,94 @@ pub fn enclosed_map(layout: &Layout) -> Vec<bool> {
 /// away for a fraction of a point of `enclosed`. Every tile of a properly
 /// closed lattice has two neighbours, so scoring the two-neighbour case at full
 /// marks costs a good layout nothing and makes litter expensive.
+/// What the layout exposes, measured rather than judged.
+///
+/// The published attack meta makes claims a layout can be checked against:
+/// Root Riders are reported to excel against *spread* bases, Fireball Super
+/// Yetis against *compact, stacked cores*, and Electro Dragon spam to be broken
+/// up by gaps and staggered defences. Those are properties of an arrangement,
+/// so they can be measured — which is a different thing from simulating the
+/// attacks, and is all this claims to be.
+#[derive(Debug, Clone, Copy)]
+pub struct Exposure {
+    /// Fraction of the buildable area covered by at least one air-targeting
+    /// defence.
+    pub air_cover: f64,
+    /// The same for ground-targeting defences.
+    pub ground_cover: f64,
+    /// How tightly the defences cluster, 0 spread to 1 compact. Mean distance
+    /// from the defensive centroid, against the widest that would fit.
+    pub compactness: f64,
+}
+
+pub fn exposure(layout: &Layout) -> Exposure {
+    let tiles = (BUILDABLE * BUILDABLE) as f64;
+    let cover = |air: bool| {
+        let mut seen = vec![false; (TOTAL * TOTAL) as usize];
+        for d in layout.defenses() {
+            if air && !d.air_targets {
+                continue;
+            }
+            if !air && !d.ground_targets {
+                continue;
+            }
+            let (cx, cy) = (d.rect.centre2().0 as f64 / 2.0, d.rect.centre2().1 as f64 / 2.0);
+            let r = d.range as f64 / UNITS_PER_TILE as f64;
+            let rmin = d.min_range as f64 / UNITS_PER_TILE as f64;
+            for y in ORIGIN..ORIGIN + BUILDABLE {
+                for x in ORIGIN..ORIGIN + BUILDABLE {
+                    let dist = (((x as f64 + 0.5) - cx).powi(2) + ((y as f64 + 0.5) - cy).powi(2)).sqrt();
+                    if dist <= r && dist >= rmin {
+                        if let Some(c) = idx(x, y) {
+                            seen[c] = true;
+                        }
+                    }
+                }
+            }
+        }
+        seen.iter().filter(|v| **v).count() as f64 / tiles
+    };
+
+    let defs: Vec<_> = layout.defenses().collect();
+    let compactness = if defs.len() < 2 {
+        0.0
+    } else {
+        let n = defs.len() as f64;
+        let cx = defs.iter().map(|d| d.rect.centre2().0 as f64 / 2.0).sum::<f64>() / n;
+        let cy = defs.iter().map(|d| d.rect.centre2().1 as f64 / 2.0).sum::<f64>() / n;
+        let radii: Vec<f64> = defs
+            .iter()
+            .map(|d| {
+                let (x, y) = (d.rect.centre2().0 as f64 / 2.0, d.rect.centre2().1 as f64 / 2.0);
+                ((x - cx).powi(2) + (y - cy).powi(2)).sqrt()
+            })
+            .collect();
+        let mean = radii.iter().sum::<f64>() / n;
+        let max = radii.iter().cloned().fold(0.0f64, f64::max);
+        // Normalised against the base's *own* extent, not the map's. Measuring
+        // against the map made every high town hall read "spread" for the
+        // uninteresting reason that 60 defences have to fill the space; the
+        // meta contrast is about shape, not size.
+        //
+        // Mean radius over max radius is 2/3 for defences spread evenly through
+        // a disc, near 1 for a ring with a hollow middle, and small for a
+        // clustered core. That ratio is mapped so a ring reads 0 and a tight
+        // core reads 1.
+        if max <= 0.0 {
+            0.0
+        } else {
+            let ratio = mean / max;
+            ((1.0 - (ratio - 0.40) / 0.60)).clamp(0.0, 1.0)
+        }
+    };
+
+    Exposure {
+        air_cover: cover(true),
+        ground_cover: cover(false),
+        compactness,
+    }
+}
+
 pub fn wall_integrity(layout: &Layout) -> f64 {
     if layout.walls.is_empty() {
         return 1.0;
@@ -350,6 +438,8 @@ mod tests {
             range,
             min_range,
             is_trap: false,
+            air_targets: true,
+            ground_targets: true,
         }
     }
 
@@ -396,6 +486,8 @@ mod tests {
                 range: 0,
                 min_range: 0,
                 is_trap: false,
+                air_targets: true,
+                ground_targets: true,
             });
             evaluate(&l, &Weights::war()).th_depth
         };

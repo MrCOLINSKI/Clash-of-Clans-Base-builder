@@ -193,6 +193,8 @@ mod tests {
             range: 900,
             min_range: 0,
             is_trap: false,
+            air_targets: true,
+            ground_targets: true,
         }
     }
 

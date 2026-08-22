@@ -41,6 +41,7 @@ fn main() -> Result<()> {
                 "metrics": metrics_json(&outcome.end),
                 "score": outcome.final_score,
                 "gain_percent": outcome.gain_percent(),
+                "exposure": exposure_json(&outcome.layout),
             }),
         );
         eprintln!(
@@ -80,6 +81,16 @@ fn layout_json(l: &Layout) -> Value {
             "is_trap": p.is_trap,
             "rect": { "x": p.rect.x, "y": p.rect.y, "w": p.rect.w, "h": p.rect.h },
         })).collect::<Vec<_>>(),
+    })
+}
+
+/// What the layout exposes, for pairing with the published attack meta.
+fn exposure_json(l: &Layout) -> Value {
+    let e = metrics::exposure(l);
+    json!({
+        "air_cover": (e.air_cover * 1000.0).round() / 1000.0,
+        "ground_cover": (e.ground_cover * 1000.0).round() / 1000.0,
+        "compactness": (e.compactness * 1000.0).round() / 1000.0,
     })
 }
 

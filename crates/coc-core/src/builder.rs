@@ -132,7 +132,7 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
         let Some(level) = level_for(data, name, th) else {
             continue;
         };
-        let (w, h, class, range, min_range, is_trap) = dims(data, name);
+        let (w, h, class, range, min_range, is_trap, air, ground) = dims(data, name);
         if w == 0 {
             continue;
         }
@@ -181,6 +181,8 @@ pub fn seed(data: &GameData, th: u32, seed: u64) -> Layout {
                     range,
                     min_range,
                     is_trap,
+                    air_targets: air,
+                    ground_targets: ground,
                 });
             }
         }
@@ -621,7 +623,9 @@ fn place_trap(occ: &[u8], box_: &Rect, w: i32, h: i32, rng: &mut ChaCha8Rng) -> 
     None
 }
 
-fn dims(data: &GameData, name: &str) -> (i32, i32, String, i32, i32, bool) {
+type Dims = (i32, i32, String, i32, i32, bool, bool, bool);
+
+fn dims(data: &GameData, name: &str) -> Dims {
     if let Some(b) = data.building(name) {
         let lv = b.levels.first();
         return (
@@ -631,12 +635,14 @@ fn dims(data: &GameData, name: &str) -> (i32, i32, String, i32, i32, bool) {
             lv.and_then(|l| l.attack_range).unwrap_or(0),
             lv.and_then(|l| l.min_attack_range).unwrap_or(0),
             false,
+            b.air_targets,
+            b.ground_targets,
         );
     }
     if let Some(t) = data.trap(name) {
-        return (t.width, t.height, "Trap".into(), 0, 0, true);
+        return (t.width, t.height, "Trap".into(), 0, 0, true, false, false);
     }
-    (0, 0, String::new(), 0, 0, false)
+    (0, 0, String::new(), 0, 0, false, false, false)
 }
 
 /// Placement priority: lower goes down first, closer to the centre.
