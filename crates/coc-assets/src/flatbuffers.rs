@@ -170,6 +170,16 @@ impl<'a> Table<'a> {
         Ok(Some(Table::at(self.buf, slot + rel)?))
     }
 
+    /// Start offset and length of a vector field.
+    pub fn vector_at(&self, index: usize) -> Result<Option<(usize, usize)>> {
+        let Some(slot) = self.field_offset(index)? else {
+            return Ok(None);
+        };
+        let rel = read_u32(self.buf, slot)? as usize;
+        let head = slot + rel;
+        Ok(Some((head + 4, read_u32(self.buf, head)? as usize)))
+    }
+
     /// Length of a vector field.
     pub fn vector_len(&self, index: usize) -> Result<Option<usize>> {
         let Some(slot) = self.field_offset(index)? else {

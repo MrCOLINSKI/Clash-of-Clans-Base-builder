@@ -220,3 +220,52 @@ fn decoders_never_panic_on_truncated_input() {
         }
     }
 }
+
+#[test]
+fn sc_container_yields_exports_objects_and_textures() {
+    let Some(d) = sample("buildings.sc") else {
+        return;
+    };
+    let sc = sc::decode(&d).expect("SC decodes");
+
+    assert_eq!(sc.header.version, 6);
+    assert_eq!(sc.header.hash_len, 20);
+
+    // The export table: names are what buildings.csv's ExportName refers to.
+    assert!(sc.exports.len() > 3000, "exports: {}", sc.exports.len());
+    for name in ["basic_turret_lvl5", "mortar_lvl2", "defense_wall_lvl4"] {
+        assert!(
+            sc.export_id(name).is_some(),
+            "{name} should be an export; buildings.csv names it"
+        );
+    }
+
+    // The decompressed graph carries its own object names.
+    assert!(sc.objects.len() > 3000, "objects: {}", sc.objects.len());
+    assert!(sc.object_id("basic_turret_lvl5").is_some());
+    assert!(sc.blob.len() > 20_000_000, "graph decompresses to ~29MB");
+
+    // One texture entry per atlas, with dimensions matching the SCTX headers.
+    assert_eq!(sc.textures.len(), 71, "buildings.sc samples 71 atlases");
+    let first = sc
+        .textures
+        .iter()
+        .find(|t| t.file == "buildings_0.sctx")
+        .expect("buildings_0 referenced");
+    assert_eq!(
+        (first.width, first.height),
+        (608, 1004),
+        "must agree with buildings_0.sctx's own header"
+    );
+}
+
+#[test]
+fn sc_export_ids_are_stable_positions() {
+    let Some(d) = sample("buildings.sc") else {
+        return;
+    };
+    let sc = sc::decode(&d).expect("decodes");
+    // The id is the index; there is no stored id field.
+    let id = sc.export_id("basic_turret_lvl5").expect("present");
+    assert_eq!(sc.exports[id], "basic_turret_lvl5");
+}

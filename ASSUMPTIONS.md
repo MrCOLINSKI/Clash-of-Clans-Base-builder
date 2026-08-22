@@ -445,52 +445,50 @@ than producing garbage.
 
 ### 6.7 `UNVERIFIED` — Sprite-to-building mapping is not solved
 
-Confidence: none. Assigning sprites by footprint was tried and **withdrawn**:
-at TH4 it drew a max-level X-Bow where a level-2 Mortar belonged. Real art in
-the wrong place is worse than an honest diagram, because it looks authoritative
-while being wrong, so the renderer now draws footprints and levels instead.
+Confidence: none. This is the single thing standing between the renderer and
+a 1:1 picture, and it is not solved.
 
-How far the chain is mapped:
+The `.sc` container is now largely understood. What follows is what was
+verified against `sc/buildings.sc` at 18.400.11, so the remaining work starts
+from a known position rather than from scratch.
 
-| Step | State |
+**Solved.**
+
+| Step | Result |
 |---|---|
-| Building → per-level sprite name (`buildings.csv` `ExportName`) | done — a TH4 Cannon is `basic_turret_lvl5` |
-| Sprite name present in `buildings.sc` | done — 4-byte length-prefixed UTF-8 strings |
-| Name → adjacent record | done — a FlatBuffers table with two fields, an id and a type |
-| id → movie clip → shape → texture rectangle | **missing** |
+| Container header | `SC` + LE u32 version 6, hash length 20 at offset 16 |
+| Metadata region | FlatBuffers, buffer base at offset **12** |
+| Export table | field 10: 3143 entries, each a name and a constant type tag; the export id is the **vector index**, there is no id field |
+| Object graph | a ZSTD frame after the metadata, 4.0 MB compressed to 29.7 MB |
+| Graph root | FlatBuffers, buffer base at offset **4** |
+| Object names | graph field 0: 3467 names |
+| Point pool | graph field 5: 1.93M `(x, y, t)` float triples, stride 3 |
+| Transform banks | graph field 6: five banks chunked at the u16 boundary, each a matrix vector (six floats `a b c d tx ty`) and a colour-transform vector (RGBA multiply/add) |
+| Texture list | near the graph tail: `u16` width, `u16` height, then the atlas filename — e.g. 608 x 1004 and `buildings_0.sctx`, matching that file's own SCTX header |
 
-SC v6 is FlatBuffers with an unpublished schema, so the last hop has to be
-mapped hop by hop against real files. Texture decoding itself is finished and
-correct; this is purely about knowing which rectangle belongs to which
-building.
+The 18,827 shape records across the five banks are consistent with the number
+of sprites actually packed into the atlases: flood-filling opaque regions over
+all 71 textures yields 20,591 at a 16-pixel threshold and 17,548 at 64.
 
-### 6.10 `DATA` — Per-level appearance and stats are fully available
+**Not solved: shape record → atlas rectangle.** Without it, no name resolves to
+a picture.
 
-Each level row in `buildings.csv` carries its own `TownHallLevel` requirement
-**and** its own `ExportName`. So the max level at a given town hall is the
-highest level whose requirement that hall meets — the same rule the game uses —
-and each level names its own sprite:
+**What was tried and rejected.**
 
-| Town hall | Cannon | Archer Tower | Wall | Mortar |
-|---|---|---|---|---|
-| TH4 | lvl 5 | lvl 4 | lvl 4 (75) | lvl 2 |
-| TH12 | lvl 17 | — | lvl 13 (300) | — |
+- *Assigning sprites by footprint.* Produced a max-level X-Bow standing where a
+  level-2 Mortar belongs. Withdrawn — real art in the wrong place is worse than
+  a diagram, because it looks authoritative.
+- *Ordering.* The graph's object order is not alphabetical and not atlas order:
+  `basic_turret_lvl5`, `lvl4`, `lvl3` sit at indices 591, 593, 595, interleaved
+  with unrelated objects.
+- *Identifying sprites by eye.* Workable for a handful, but the atlases hold
+  seasonal skins and every level of every building, so most candidates cannot
+  be told apart with confidence. Guessing here would reintroduce exactly the
+  confidently-wrong failure this file exists to prevent.
 
-This is why a preview that shows every town hall with the same artwork is
-wrong on its own terms, quite apart from sprite identity.
+Until the rectangle hop is mapped, the renderer must not claim 1:1.
 
-Individual sprites are recovered by flood-filling opaque regions of an atlas,
-which works because sprites are packed with transparent gutters. What that does
-not give is **which sprite is which building**.
-
-The mapping is reachable: `buildings.csv` carries `SWF` and `ExportName`
-columns (Cannon is `basic_turret_lvl1` in `sc/buildings.sc`), and those exact
-strings appear in the `.sc` file's string table. Resolving them needs the `.sc`
-record stream parsed — shape and movie-clip records down to texture rectangles.
-
-Until then the renderer assigns sprites by footprint size. The art is real and
-the sizes are right, but a given building is not necessarily showing its own
-sprite, and any preview must say so.### 6.8 `DATA` — `.sc` is version 6, little-endian
+### 6.8 `DATA` — `.sc` is version 6, little-endian
 
 An initial big-endian reading gave 100663296 instead of 6 and was caught by a
 test against a real file. Only the header is parsed; the record stream is

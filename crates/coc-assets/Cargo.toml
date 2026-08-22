@@ -13,6 +13,10 @@ astc-decode = "0.3"
 png = "0.17"
 
 [[example]]
+name = "contact"
+path = "examples/contact.rs"
+
+[[example]]
 name = "sprites"
 path = "examples/sprites.rs"
 
