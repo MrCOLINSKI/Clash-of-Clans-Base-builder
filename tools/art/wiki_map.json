@@ -1,0 +1,826 @@
+{
+ "Air Bomb": {
+  "prefix": "Air_Bomb",
+  "levels": {
+   "1": "Air_Bomb1.png",
+   "3": "Air_Bomb3.png",
+   "5": "Air_Bomb5.png",
+   "7": "Air_Bomb7.png",
+   "9": "Air_Bomb9.png",
+   "11": "Air_Bomb11.png",
+   "13": "Air_Bomb13.png"
+  },
+  "suffix": ""
+ },
+ "Air Defense": {
+  "prefix": "Air_Defense",
+  "levels": {
+   "1": "Air_Defense1.png",
+   "2": "Air_Defense2.png",
+   "3": "Air_Defense3.png",
+   "4": "Air_Defense4.png",
+   "5": "Air_Defense5.png",
+   "6": "Air_Defense6.png",
+   "7": "Air_Defense7.png",
+   "8": "Air_Defense8.png",
+   "9": "Air_Defense9.png",
+   "10": "Air_Defense10.png",
+   "11": "Air_Defense11.png",
+   "12": "Air_Defense12.png",
+   "13": "Air_Defense13.png",
+   "14": "Air_Defense14.png",
+   "15": "Air_Defense15.png",
+   "16": "Air_Defense16.png",
+   "2012": "Air_Defense2012.png"
+  },
+  "suffix": ""
+ },
+ "Air Sweeper": {
+  "prefix": "Air_Sweeper",
+  "levels": {
+   "1": "Air_Sweeper1.png",
+   "2": "Air_Sweeper2.png",
+   "3": "Air_Sweeper3.png",
+   "4": "Air_Sweeper4.png",
+   "5": "Air_Sweeper5.png",
+   "6": "Air_Sweeper6.png",
+   "7": "Air_Sweeper7.png"
+  },
+  "suffix": ""
+ },
+ "Archer Tower": {
+  "prefix": "Archer_Tower",
+  "levels": {
+   "1": "Archer_Tower1.png",
+   "2": "Archer_Tower2.png",
+   "3": "Archer_Tower3.png",
+   "4": "Archer_Tower4.png",
+   "5": "Archer_Tower5.png",
+   "6": "Archer_Tower6.png",
+   "7": "Archer_Tower7.png",
+   "8": "Archer_Tower8.png",
+   "9": "Archer_Tower9.png",
+   "10": "Archer_Tower10.png",
+   "11": "Archer_Tower11.png",
+   "12": "Archer_Tower12.png",
+   "13": "Archer_Tower13.png",
+   "14": "Archer_Tower14.png",
+   "15": "Archer_Tower15.png",
+   "16": "Archer_Tower16.png",
+   "17": "Archer_Tower17.png",
+   "18": "Archer_Tower18.png",
+   "19": "Archer_Tower19.png",
+   "20": "Archer_Tower20.png",
+   "21": "Archer_Tower21.png",
+   "109": "Archer_Tower109.png"
+  },
+  "suffix": ""
+ },
+ "Army Camp": {
+  "prefix": "Army_Camp",
+  "levels": {
+   "1": "Army_Camp1.png",
+   "2": "Army_Camp2.png",
+   "3": "Army_Camp3.png",
+   "4": "Army_Camp4.png",
+   "5": "Army_Camp5.png",
+   "6": "Army_Camp6.png",
+   "7": "Army_Camp7.png",
+   "8": "Army_Camp8.png",
+   "9": "Army_Camp9.png",
+   "10": "Army_Camp10.png",
+   "11": "Army_Camp11.png",
+   "12": "Army_Camp12.png",
+   "13": "Army_Camp13.png",
+   "14": "Army_Camp14.png"
+  },
+  "suffix": ""
+ },
+ "Barracks": {
+  "prefix": "Barracks",
+  "levels": {
+   "1": "Barracks1.png",
+   "2": "Barracks2.png",
+   "3": "Barracks3.png",
+   "4": "Barracks4.png",
+   "5": "Barracks5.png",
+   "6": "Barracks6.png",
+   "7": "Barracks7.png",
+   "8": "Barracks8.png",
+   "9": "Barracks9.png",
+   "10": "Barracks10.png",
+   "11": "Barracks11.png",
+   "12": "Barracks12.png",
+   "13": "Barracks13.png",
+   "14": "Barracks14.png",
+   "15": "Barracks15.png",
+   "16": "Barracks16.png",
+   "17": "Barracks17.png",
+   "18": "Barracks18.png",
+   "19": "Barracks19.png"
+  },
+  "suffix": ""
+ },
+ "Blacksmith": {
+  "prefix": "Blacksmith",
+  "levels": {
+   "1": "Blacksmith1.png",
+   "3": "Blacksmith3.png",
+   "5": "Blacksmith5.png",
+   "7": "Blacksmith7.png",
+   "9": "Blacksmith9.png"
+  },
+  "suffix": ""
+ },
+ "Bomb": {
+  "prefix": "Bomb",
+  "levels": {
+   "1": "Bomb1.png",
+   "3": "Bomb3.png",
+   "5": "Bomb5.png",
+   "7": "Bomb7.png",
+   "9": "Bomb9.png",
+   "11": "Bomb11.png",
+   "13": "Bomb13.png"
+  },
+  "suffix": ""
+ },
+ "Bomb Tower": {
+  "prefix": "Bomb_Tower",
+  "levels": {
+   "1": "Bomb_Tower1.png",
+   "2": "Bomb_Tower2.png",
+   "3": "Bomb_Tower3.png",
+   "4": "Bomb_Tower4.png",
+   "5": "Bomb_Tower5.png",
+   "6": "Bomb_Tower6.png",
+   "7": "Bomb_Tower7.png",
+   "8": "Bomb_Tower8.png",
+   "9": "Bomb_Tower9.png",
+   "10": "Bomb_Tower10.png",
+   "11": "Bomb_Tower11.png",
+   "12": "Bomb_Tower12.png",
+   "13": "Bomb_Tower13.png"
+  },
+  "suffix": ""
+ },
+ "Builders Hut": {
+  "prefix": "Builders_Hut",
+  "levels": {
+   "2": "Builders_Hut2.png",
+   "3": "Builders_Hut3.png",
+   "4": "Builders_Hut4.png",
+   "5": "Builders_Hut5.png",
+   "6": "Builders_Hut6.png",
+   "7": "Builders_Hut7.png",
+   "8": "Builders_Hut8.png"
+  },
+  "suffix": ""
+ },
+ "Cannon": {
+  "prefix": "Cannon",
+  "levels": {
+   "1": "Cannon1.png",
+   "2": "Cannon2.png",
+   "3": "Cannon3.png",
+   "4": "Cannon4.png",
+   "5": "Cannon5.png",
+   "6": "Cannon6.png",
+   "7": "Cannon7.png",
+   "8": "Cannon8.png",
+   "9": "Cannon9.png",
+   "10": "Cannon10.png",
+   "11": "Cannon11.png",
+   "12": "Cannon12.png",
+   "13": "Cannon13.png",
+   "14": "Cannon14.png",
+   "15": "Cannon15.png",
+   "16": "Cannon16.png",
+   "17": "Cannon17.png",
+   "18": "Cannon18.png",
+   "19": "Cannon19.png",
+   "20": "Cannon20.png",
+   "21": "Cannon21.png"
+  },
+  "suffix": ""
+ },
+ "Clan Castle": {
+  "prefix": "Clan_Castle",
+  "levels": {
+   "1": "Clan_Castle1.png",
+   "2": "Clan_Castle2.png",
+   "3": "Clan_Castle3.png",
+   "4": "Clan_Castle4.png",
+   "5": "Clan_Castle5.png",
+   "6": "Clan_Castle6.png",
+   "7": "Clan_Castle7.png",
+   "8": "Clan_Castle8.png",
+   "9": "Clan_Castle9.png",
+   "10": "Clan_Castle10.png",
+   "11": "Clan_Castle11.png",
+   "12": "Clan_Castle12.png",
+   "13": "Clan_Castle13.png",
+   "14": "Clan_Castle14.png"
+  },
+  "suffix": ""
+ },
+ "Dark Barracks": {
+  "prefix": "Dark_Barracks",
+  "levels": {
+   "1": "Dark_Barracks1.png",
+   "2": "Dark_Barracks2.png",
+   "3": "Dark_Barracks3.png",
+   "4": "Dark_Barracks4.png",
+   "5": "Dark_Barracks5.png",
+   "6": "Dark_Barracks6.png",
+   "7": "Dark_Barracks7.png",
+   "8": "Dark_Barracks8.png",
+   "9": "Dark_Barracks9.png",
+   "10": "Dark_Barracks10.png",
+   "11": "Dark_Barracks11.png",
+   "12": "Dark_Barracks12.png",
+   "13": "Dark_Barracks13.png"
+  },
+  "suffix": ""
+ },
+ "Dark Elixir Drill": {
+  "prefix": "Dark_Elixir_Drill",
+  "levels": {
+   "1": "Dark_Elixir_Drill1.png",
+   "2": "Dark_Elixir_Drill2.png",
+   "3": "Dark_Elixir_Drill3.png",
+   "4": "Dark_Elixir_Drill4.png",
+   "5": "Dark_Elixir_Drill5.png",
+   "6": "Dark_Elixir_Drill6.png",
+   "7": "Dark_Elixir_Drill7.png",
+   "8": "Dark_Elixir_Drill8.png",
+   "9": "Dark_Elixir_Drill9.png",
+   "10": "Dark_Elixir_Drill10.png",
+   "11": "Dark_Elixir_Drill11.png"
+  },
+  "suffix": ""
+ },
+ "Dark Elixir Storage": {
+  "prefix": "Dark_Elixir_Storage",
+  "levels": {
+   "1": "Dark_Elixir_Storage1.png",
+   "2": "Dark_Elixir_Storage2.png",
+   "3": "Dark_Elixir_Storage3.png",
+   "4": "Dark_Elixir_Storage4.png",
+   "5": "Dark_Elixir_Storage5.png",
+   "6": "Dark_Elixir_Storage6.png",
+   "7": "Dark_Elixir_Storage7.png",
+   "8": "Dark_Elixir_Storage8.png",
+   "9": "Dark_Elixir_Storage9.png",
+   "10": "Dark_Elixir_Storage10.png",
+   "11": "Dark_Elixir_Storage11.png",
+   "12": "Dark_Elixir_Storage12.png",
+   "13": "Dark_Elixir_Storage13.png"
+  },
+  "suffix": ""
+ },
+ "Dark Spell Factory": {
+  "prefix": "Dark_Spell_Factory",
+  "levels": {
+   "1": "Dark_Spell_Factory1.png",
+   "2": "Dark_Spell_Factory2.png",
+   "3": "Dark_Spell_Factory3.png",
+   "4": "Dark_Spell_Factory4.png",
+   "5": "Dark_Spell_Factory5.png",
+   "6": "Dark_Spell_Factory6.png",
+   "7": "Dark_Spell_Factory7.png",
+   "8": "Dark_Spell_Factory8.png"
+  },
+  "suffix": ""
+ },
+ "Eagle Artillery": {
+  "prefix": "Eagle_Artillery",
+  "levels": {
+   "1": "Eagle_Artillery1.png",
+   "2": "Eagle_Artillery2.png",
+   "3": "Eagle_Artillery3.png",
+   "4": "Eagle_Artillery4.png",
+   "5": "Eagle_Artillery5.png",
+   "6": "Eagle_Artillery6.png",
+   "7": "Eagle_Artillery7.png"
+  },
+  "suffix": ""
+ },
+ "Elixir Collector": {
+  "prefix": "Elixir_Collector",
+  "levels": {
+   "1": "Elixir_Collector1.png",
+   "2": "Elixir_Collector2.png",
+   "3": "Elixir_Collector3.png",
+   "4": "Elixir_Collector4.png",
+   "5": "Elixir_Collector5.png",
+   "6": "Elixir_Collector6.png",
+   "7": "Elixir_Collector7.png",
+   "8": "Elixir_Collector8.png",
+   "9": "Elixir_Collector9.png",
+   "10": "Elixir_Collector10.png",
+   "11": "Elixir_Collector11.png",
+   "12": "Elixir_Collector12.png",
+   "13": "Elixir_Collector13.png",
+   "14": "Elixir_Collector14.png",
+   "15": "Elixir_Collector15.png",
+   "16": "Elixir_Collector16.png",
+   "17": "Elixir_Collector17.png"
+  },
+  "suffix": ""
+ },
+ "Elixir Storage": {
+  "prefix": "Elixir_Storage",
+  "levels": {
+   "1": "Elixir_Storage1.png",
+   "2": "Elixir_Storage2.png",
+   "3": "Elixir_Storage3.png",
+   "4": "Elixir_Storage4.png",
+   "5": "Elixir_Storage5.png",
+   "6": "Elixir_Storage6.png",
+   "7": "Elixir_Storage7.png",
+   "8": "Elixir_Storage8.png",
+   "9": "Elixir_Storage9.png",
+   "10": "Elixir_Storage10.png",
+   "11": "Elixir_Storage11.png",
+   "12": "Elixir_Storage12.png",
+   "13": "Elixir_Storage13.png",
+   "14": "Elixir_Storage14.png",
+   "15": "Elixir_Storage15.png",
+   "16": "Elixir_Storage16.png",
+   "17": "Elixir_Storage17.png",
+   "18": "Elixir_Storage18.png",
+   "19": "Elixir_Storage19.png"
+  },
+  "suffix": ""
+ },
+ "Firespitter": {
+  "prefix": "Firespitter",
+  "levels": {
+   "1": "Firespitter1.png",
+   "2": "Firespitter2.png",
+   "3": "Firespitter3.png"
+  },
+  "suffix": ""
+ },
+ "FreezeBomb": {
+  "prefix": "Freeze_Trap",
+  "levels": {
+   "1": "Freeze_Trap1.png"
+  },
+  "suffix": ""
+ },
+ "Giant Bomb": {
+  "prefix": "Giant_Bomb",
+  "levels": {
+   "1": "Giant_Bomb1.png",
+   "3": "Giant_Bomb3.png",
+   "5": "Giant_Bomb5.png",
+   "7": "Giant_Bomb7.png",
+   "9": "Giant_Bomb9.png",
+   "11": "Giant_Bomb11.png"
+  },
+  "suffix": ""
+ },
+ "Giga Bomb": {
+  "prefix": "Giga_Bomb",
+  "levels": {
+   "1": "Giga_Bomb1.png",
+   "2": "Giga_Bomb2.png",
+   "3": "Giga_Bomb3.png",
+   "4": "Giga_Bomb4.png"
+  },
+  "suffix": ""
+ },
+ "Gold Mine": {
+  "prefix": "Gold_Mine",
+  "levels": {
+   "1": "Gold_Mine1.png",
+   "2": "Gold_Mine2.png",
+   "3": "Gold_Mine3.png",
+   "4": "Gold_Mine4.png",
+   "5": "Gold_Mine5.png",
+   "6": "Gold_Mine6.png",
+   "7": "Gold_Mine7.png",
+   "8": "Gold_Mine8.png",
+   "9": "Gold_Mine9.png",
+   "10": "Gold_Mine10.png",
+   "11": "Gold_Mine11.png",
+   "12": "Gold_Mine12.png",
+   "13": "Gold_Mine13.png",
+   "14": "Gold_Mine14.png",
+   "15": "Gold_Mine15.png",
+   "16": "Gold_Mine16.png",
+   "17": "Gold_Mine17.png"
+  },
+  "suffix": ""
+ },
+ "Gold Storage": {
+  "prefix": "Gold_Storage",
+  "levels": {
+   "1": "Gold_Storage1.png",
+   "2": "Gold_Storage2.png",
+   "3": "Gold_Storage3.png",
+   "4": "Gold_Storage4.png",
+   "5": "Gold_Storage5.png",
+   "6": "Gold_Storage6.png",
+   "7": "Gold_Storage7.png",
+   "8": "Gold_Storage8.png",
+   "9": "Gold_Storage9.png",
+   "10": "Gold_Storage10.png",
+   "11": "Gold_Storage11.png",
+   "12": "Gold_Storage12.png",
+   "13": "Gold_Storage13.png",
+   "14": "Gold_Storage14.png",
+   "15": "Gold_Storage15.png",
+   "16": "Gold_Storage16.png",
+   "17": "Gold_Storage17.png",
+   "18": "Gold_Storage18.png",
+   "19": "Gold_Storage19.png"
+  },
+  "suffix": ""
+ },
+ "Hero Hall": {
+  "prefix": "Hero_Hall",
+  "levels": {
+   "0": "Hero_Hall0.png",
+   "1": "Hero_Hall1.png",
+   "2": "Hero_Hall2.png",
+   "3": "Hero_Hall3.png",
+   "4": "Hero_Hall4.png",
+   "5": "Hero_Hall5.png",
+   "6": "Hero_Hall6.png",
+   "7": "Hero_Hall7.png",
+   "8": "Hero_Hall8.png",
+   "9": "Hero_Hall9.png",
+   "10": "Hero_Hall10.png",
+   "11": "Hero_Hall11.png",
+   "12": "Hero_Hall12.png"
+  },
+  "suffix": ""
+ },
+ "Hidden Tesla": {
+  "prefix": "Hidden_Tesla",
+  "levels": {
+   "1": "Hidden_Tesla1.png",
+   "2": "Hidden_Tesla2.png",
+   "3": "Hidden_Tesla3.png",
+   "4": "Hidden_Tesla4.png",
+   "5": "Hidden_Tesla5.png",
+   "6": "Hidden_Tesla6.png",
+   "7": "Hidden_Tesla7.png",
+   "8": "Hidden_Tesla8.png",
+   "9": "Hidden_Tesla9.png",
+   "10": "Hidden_Tesla10.png",
+   "11": "Hidden_Tesla11.png",
+   "12": "Hidden_Tesla12.png",
+   "13": "Hidden_Tesla13.png",
+   "14": "Hidden_Tesla14.png",
+   "15": "Hidden_Tesla15.png",
+   "16": "Hidden_Tesla16.png",
+   "17": "Hidden_Tesla17.png"
+  },
+  "suffix": ""
+ },
+ "Inferno Tower": {
+  "prefix": "Inferno_Tower",
+  "levels": {
+   "1": "Inferno_Tower1_Single.png",
+   "2": "Inferno_Tower2_Single.png",
+   "3": "Inferno_Tower3_Single.png",
+   "4": "Inferno_Tower4_Single.png",
+   "5": "Inferno_Tower5_Single.png",
+   "6": "Inferno_Tower6_Single.png",
+   "7": "Inferno_Tower7_Single.png",
+   "8": "Inferno_Tower8_Single.png",
+   "9": "Inferno_Tower9_Single.png",
+   "10": "Inferno_Tower10_Single.png",
+   "11": "Inferno_Tower11_Single.png",
+   "12": "Inferno_Tower12_Single.png"
+  },
+  "suffix": "_Single"
+ },
+ "Laboratory": {
+  "prefix": "Laboratory",
+  "levels": {
+   "1": "Laboratory1.png",
+   "2": "Laboratory2.png",
+   "3": "Laboratory3.png",
+   "4": "Laboratory4.png",
+   "5": "Laboratory5.png",
+   "6": "Laboratory6.png",
+   "7": "Laboratory7.png",
+   "8": "Laboratory8.png",
+   "9": "Laboratory9.png",
+   "10": "Laboratory10.png",
+   "11": "Laboratory11.png",
+   "12": "Laboratory12.png",
+   "13": "Laboratory13.png",
+   "14": "Laboratory14.png",
+   "15": "Laboratory15.png",
+   "16": "Laboratory16.png"
+  },
+  "suffix": ""
+ },
+ "Monolith": {
+  "prefix": "Monolith",
+  "levels": {
+   "1": "Monolith1.png",
+   "2": "Monolith2.png",
+   "3": "Monolith3.png",
+   "4": "Monolith4.png",
+   "5": "Monolith5.png"
+  },
+  "suffix": ""
+ },
+ "Mortar": {
+  "prefix": "Mortar",
+  "levels": {
+   "1": "Mortar1.png",
+   "2": "Mortar2.png",
+   "3": "Mortar3.png",
+   "4": "Mortar4.png",
+   "5": "Mortar5.png",
+   "6": "Mortar6.png",
+   "7": "Mortar7.png",
+   "8": "Mortar8.png",
+   "9": "Mortar9.png",
+   "10": "Mortar10.png",
+   "11": "Mortar11.png",
+   "12": "Mortar12.png",
+   "13": "Mortar13.png",
+   "14": "Mortar14.png",
+   "15": "Mortar15.png",
+   "16": "Mortar16.png",
+   "17": "Mortar17.png",
+   "18": "Mortar18.png"
+  },
+  "suffix": ""
+ },
+ "Multi Archer Tower": {
+  "prefix": "Multi-Archer_Tower",
+  "levels": {
+   "1": "Multi-Archer_Tower1.png",
+   "2": "Multi-Archer_Tower2.png",
+   "3": "Multi-Archer_Tower3.png",
+   "4": "Multi-Archer_Tower4.png"
+  },
+  "suffix": ""
+ },
+ "Multi Gear Tower": {
+  "prefix": "Multi-Gear_Tower",
+  "levels": {
+   "1": "Multi-Gear_Tower1_FastAttack.png",
+   "2": "Multi-Gear_Tower2_FastAttack.png",
+   "3": "Multi-Gear_Tower3_FastAttack.png"
+  },
+  "suffix": "_FastAttack"
+ },
+ "Pet House": {
+  "prefix": "Pet_House",
+  "levels": {
+   "1": "Pet_House1.png",
+   "2": "Pet_House2.png",
+   "3": "Pet_House3.png",
+   "4": "Pet_House4.png",
+   "5": "Pet_House5.png",
+   "6": "Pet_House6.png",
+   "7": "Pet_House7.png",
+   "8": "Pet_House8.png",
+   "9": "Pet_House9.png",
+   "10": "Pet_House10.png",
+   "11": "Pet_House11.png",
+   "12": "Pet_House12.png"
+  },
+  "suffix": ""
+ },
+ "Revenge Tower": {
+  "prefix": "Revenge_Tower",
+  "levels": {
+   "1": "Revenge_Tower1_Dormant.png",
+   "2": "Revenge_Tower2_Dormant.png"
+  },
+  "suffix": "_Dormant"
+ },
+ "Ricochet Cannon": {
+  "prefix": "Ricochet_Cannon",
+  "levels": {
+   "1": "Ricochet_Cannon1.png",
+   "2": "Ricochet_Cannon2.png",
+   "3": "Ricochet_Cannon3.png",
+   "4": "Ricochet_Cannon4.png"
+  },
+  "suffix": ""
+ },
+ "Scattershot": {
+  "prefix": "Scattershot",
+  "levels": {
+   "1": "Scattershot1.png",
+   "2": "Scattershot2.png",
+   "3": "Scattershot3.png",
+   "4": "Scattershot4.png",
+   "5": "Scattershot5.png",
+   "6": "Scattershot6.png",
+   "7": "Scattershot7.png"
+  },
+  "suffix": ""
+ },
+ "Seeking Air Mine": {
+  "prefix": "Seeking_Air_Mine",
+  "levels": {
+   "1": "Seeking_Air_Mine1.png",
+   "3": "Seeking_Air_Mine3.png",
+   "5": "Seeking_Air_Mine5.png",
+   "7": "Seeking_Air_Mine7.png"
+  },
+  "suffix": ""
+ },
+ "Siege Workshop": {
+  "prefix": "Workshop",
+  "levels": {
+   "1": "Workshop1.png",
+   "2": "Workshop2.png",
+   "3": "Workshop3.png",
+   "4": "Workshop4.png",
+   "5": "Workshop5.png",
+   "6": "Workshop6.png",
+   "7": "Workshop7.png",
+   "8": "Workshop8.png",
+   "9": "Workshop9.png"
+  },
+  "suffix": ""
+ },
+ "Spell Factory": {
+  "prefix": "Spell_Factory",
+  "levels": {
+   "1": "Spell_Factory1.png",
+   "2": "Spell_Factory2.png",
+   "3": "Spell_Factory3.png",
+   "4": "Spell_Factory4.png",
+   "5": "Spell_Factory5.png",
+   "6": "Spell_Factory6.png",
+   "7": "Spell_Factory7.png",
+   "8": "Spell_Factory8.png",
+   "9": "Spell_Factory9.png"
+  },
+  "suffix": ""
+ },
+ "Spell Tower": {
+  "prefix": "Spell_Tower",
+  "levels": {
+   "1": "Spell_Tower1_Rage.png",
+   "2": "Spell_Tower2_Rage.png",
+   "3": "Spell_Tower3_Rage.png",
+   "4": "Spell_Tower4_Rage.png"
+  },
+  "suffix": "_Rage"
+ },
+ "Spring Trap": {
+  "prefix": "Spring_Trap",
+  "levels": {
+   "1": "Spring_Trap1.png",
+   "3": "Spring_Trap3.png",
+   "5": "Spring_Trap5.png",
+   "7": "Spring_Trap7.png",
+   "9": "Spring_Trap9.png",
+   "11": "Spring_Trap11.png",
+   "13": "Spring_Trap13.png"
+  },
+  "suffix": ""
+ },
+ "Super Wizard Tower": {
+  "prefix": "Super_Wizard_Tower",
+  "levels": {
+   "1": "Super_Wizard_Tower1.png",
+   "2": "Super_Wizard_Tower2.png"
+  },
+  "suffix": ""
+ },
+ "Tornado Trap": {
+  "prefix": "Tornado_Trap",
+  "levels": {
+   "1": "Tornado_Trap1.png",
+   "2": "Tornado_Trap2.png"
+  },
+  "suffix": ""
+ },
+ "Town Hall": {
+  "prefix": "Town_Hall",
+  "levels": {
+   "1": "Town_Hall1.png",
+   "2": "Town_Hall2.png",
+   "3": "Town_Hall3.png",
+   "4": "Town_Hall4.png",
+   "5": "Town_Hall5.png",
+   "6": "Town_Hall6.png",
+   "7": "Town_Hall7.png",
+   "8": "Town_Hall8.png",
+   "9": "Town_Hall9.png",
+   "10": "Town_Hall10.png",
+   "11": "Town_Hall11.png",
+   "12": "Town_Hall12.png",
+   "13": "Town_Hall13.png",
+   "14": "Town_Hall14.png",
+   "15": "Town_Hall15.png",
+   "16": "Town_Hall16.png",
+   "18": "Town_Hall18.png"
+  },
+  "suffix": ""
+ },
+ "Wall": {
+  "prefix": "Wall",
+  "levels": {
+   "1": "Wall1.png",
+   "2": "Wall2.png",
+   "3": "Wall3.png",
+   "4": "Wall4.png",
+   "5": "Wall5.png",
+   "6": "Wall6.png",
+   "7": "Wall7.png",
+   "8": "Wall8.png",
+   "9": "Wall9.png",
+   "10": "Wall10.png",
+   "11": "Wall11.png",
+   "12": "Wall12.png",
+   "13": "Wall13.png",
+   "14": "Wall14.png",
+   "15": "Wall15.png",
+   "16": "Wall16.png",
+   "17": "Wall17.png",
+   "18": "Wall18.png",
+   "19": "Wall19.png"
+  },
+  "suffix": ""
+ },
+ "Wizard Tower": {
+  "prefix": "Wizard_Tower",
+  "levels": {
+   "1": "Wizard_Tower1.png",
+   "2": "Wizard_Tower2.png",
+   "3": "Wizard_Tower3.png",
+   "4": "Wizard_Tower4.png",
+   "5": "Wizard_Tower5.png",
+   "6": "Wizard_Tower6.png",
+   "7": "Wizard_Tower7.png",
+   "8": "Wizard_Tower8.png",
+   "9": "Wizard_Tower9.png",
+   "10": "Wizard_Tower10.png",
+   "11": "Wizard_Tower11.png",
+   "12": "Wizard_Tower12.png",
+   "13": "Wizard_Tower13.png",
+   "14": "Wizard_Tower14.png",
+   "15": "Wizard_Tower15.png",
+   "16": "Wizard_Tower16.png",
+   "17": "Wizard_Tower17.png"
+  },
+  "suffix": ""
+ },
+ "X-Bow": {
+  "prefix": "X-Bow",
+  "levels": {
+   "4": "X-Bow4.png",
+   "5": "X-Bow5.png"
+  },
+  "suffix": ""
+ },
+ "Crafting Station": {
+  "prefix": "Crafting_Station",
+  "levels": {
+   "0": "Crafting_Station.png"
+  },
+  "suffix": "",
+  "single": true
+ },
+ "Helper Hut": {
+  "prefix": "Helper_Hut",
+  "levels": {
+   "0": "Helper_Hut.png"
+  },
+  "suffix": "",
+  "single": true
+ },
+ "ShrinkTrap": {
+  "prefix": "Shrink_Trap",
+  "levels": {
+   "0": "Shrink_Trap.png"
+  },
+  "suffix": "",
+  "single": true
+ },
+ "Skeleton Trap": {
+  "prefix": "Skeleton_Trap_info",
+  "levels": {
+   "0": "Skeleton_Trap_info.png"
+  },
+  "suffix": "",
+  "single": true
+ },
+ "BOBs Hut": {
+  "prefix": "B.O.B1",
+  "levels": {
+   "0": "B.O.B1.png"
+  },
+  "suffix": "",
+  "single": true
+ }
+}
