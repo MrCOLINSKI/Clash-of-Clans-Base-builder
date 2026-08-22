@@ -2,6 +2,7 @@
 resolver = "2"
 members = [
     "crates/coc-data",
+    "crates/coc-assets",
     "crates/coc-core",
     "crates/coc-sim",
     "crates/coc-meta",
@@ -18,6 +19,7 @@ license = "MIT"
 
 [workspace.dependencies]
 coc-data = { path = "crates/coc-data" }
+coc-assets = { path = "crates/coc-assets" }
 coc-core = { path = "crates/coc-core" }
 coc-sim = { path = "crates/coc-sim" }
 coc-meta = { path = "crates/coc-meta" }
