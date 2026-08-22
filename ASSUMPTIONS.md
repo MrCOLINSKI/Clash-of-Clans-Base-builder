@@ -557,6 +557,28 @@ Consequences, which are worth stating plainly because they bound the product:
 - Export is therefore a **placement plan** — exact tile coordinates followed by
   hand in the in-game editor — plus the project's own JSON schema.
 
+### 7.1b `DATA` — Published base catalogues carry no coordinates either
+
+Checked directly, since "fetch real base designs" is an obvious thing to want.
+
+- **`clash-bases`** — 5,162 curated layouts, TH4 to TH18. Every entry is
+  `{name, town_hall, type, link, builder, image}`. The link is the same 24-byte
+  identifier; the image is a screenshot on an image host. **No coordinates.**
+- **`cocbases`, `clashofclanslayouts`, `cocbase.net`** — same shape: links and
+  screenshots.
+- **`coc-base-analyser`** — genuinely reads real layouts, but its
+  `VillageJsonParser` consumes the game's **private village JSON**, obtained
+  from an authenticated session. Not reachable, and not a public endpoint.
+- **The official API** (`api.clashofclans.com`) exposes clan and player stats
+  and **no layout endpoint at all**.
+
+So a real base can be *referenced* and opened in-game, but its placements
+cannot be imported. Reconstructing one from a screenshot is the only remaining
+route, and that is image analysis with no ground truth to check against.
+
+The catalogue is surfaced in the renderer as links, not as importable designs,
+and says so.
+
 ### 7.2 Consequence for the map extent
 
 This also closes the door on deriving the 44x44 grid extent from a link, which
