@@ -739,9 +739,15 @@ eight defences were pushed outside the walls at TH14.
 
 ### 3.10 `DATA` — The attack meta is transcribed, and kept separate from what is measured
 
-`data/meta/attacks.json` holds 19 attacks, 5 base archetypes and a per-town-hall
-list, each entry carrying the source it came from. Nine sources, all cited in
-the file and shown in the renderer.
+`data/meta/attacks.json` holds 52 attacks, 5 base archetypes and a per-town-hall
+list covering TH1 to TH18, each entry carrying the source it came from. Twelve
+sources, all cited in the file and shown in the renderer.
+
+Coverage is deliberately uneven, because the game is: TH1 has one entry because
+only Barbarians exist there, and TH18 has seven. Two independent full-roster
+sources back the per-hall lists, so no town hall rests on a single opinion, and
+the low levels — where most published writing thins out — are covered from the
+same sources as the high ones rather than left as a stub.
 
 It is **transcribed, not simulated**. Every claim in it is something players
 publish; none of it was tested here, and the file says so in its own `note`
